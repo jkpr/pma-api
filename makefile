@@ -1,5 +1,5 @@
 PYTHON=./env/bin/python3
-SRC=pmaapi
+SRC=pma_api/
 TEST=test/
 
 .PHONY: lint tags ltags test all lint_all codestyle docstyle server serve lint_src lint_test doctest doc code linters_all code_src code_test doc_src doc_test shell initdb
