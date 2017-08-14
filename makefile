@@ -63,6 +63,8 @@ server:
 
 shell:
 	${APP_MANAGER} shell
-
+INITDB=${APP_MANAGER} initdb
 initdb:
-	${APP_MANAGER} initdb
+	${INITDB}
+init_and_overwrite:
+	${INITDB} --overwrite
