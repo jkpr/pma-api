@@ -46,7 +46,7 @@ TAGS_BASE=ctags -R --python-kinds=-i
 tags:
 	${TAGS_BASE} .
 ltags:
-	${TAGS_BASE} ./${SRC}
+	${TAGS_BASE} ${SRC}
 
 # Testing
 test_all: unittest doctest
