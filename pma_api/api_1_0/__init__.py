@@ -5,6 +5,97 @@ from ..models import Country, EnglishString, Survey, Indicator, Data
 
 
 API = Blueprint('api', __name__)
+RESOURCE_INFO = {
+    'characteristics': {
+        'aliases': {
+            'api': {
+                'singular': 'characteristic',
+                'plural': 'characteristics'
+            },
+            'db': {
+                'singular': 'characteristic',
+                'plural': 'characteristics'
+            }
+        }
+    },
+    'characteristicGroups': {
+        'aliases': {
+            'api': {
+                'singular': 'characteristicGroup',
+                'plural': 'characteristicGroups'
+            },
+            'db': {
+                'singular': 'characteristic_group',
+                'plural': 'characteristic_groups'
+            }
+        }
+    },
+    'countries': {
+        'aliases': {
+            'api': {
+                'singular': 'country',
+                'plural': 'countries'
+            },
+            'db': {
+                'singular': 'country',
+                'plural': 'countries'
+            }
+        }
+    },
+    'data': {
+        'aliases': {
+            'api': {
+                'singular': 'datum',
+                'plural': 'data'
+            },
+            'db': {
+                'singular': 'datum',
+                'plural': 'data'
+            }
+        }
+    },
+    'indicators': {
+        'aliases': {
+            'api': {
+                'singular': 'indicator',
+                'plural': 'indicators'
+            },
+            'db': {
+                'singular': 'indicator',
+                'plural': 'indicators'
+            }
+        }
+    },
+    'surveys': {
+        'aliases': {
+            'api': {
+                'singular': 'survey',
+                'plural': 'surveys'
+            },
+            'db': {
+                'singular': 'survey',
+                'plural': 'surveys'
+            }
+        }
+    },
+    'texts': {
+        'aliases': {
+            'api': {
+                'singular': 'text',
+                'plural': 'texts'
+            },
+            'db': {
+                'singular': 'text',
+                'plural': 'texts'
+            }
+        }
+    },
+}
+# RESOURCES_under_consideration =\
+#     [['api_singular', 'api_plural', 'db_singular', 'db_plural'],
+#      ['characteristic', 'characteristics', 'characteristic',
+#       'characteristics'],
+#      ['...', '...', '...', '...']]
 
 
 @API.route('/')
@@ -113,7 +204,7 @@ def get_indicator(code):
 
 
 @API.route('/characteristics')
-def get_characterstics():
+def get_characteristics():
     """Characteristics resource collection GET method.
 
     Returns:
@@ -125,6 +216,29 @@ def get_characterstics():
 @API.route('/characteristics/<code>')
 def get_characteristic(code):
     """Characteristic resource entity GET method.
+
+    Args:
+        code (str): Identification for resource entity.
+
+    Returns:
+        json: Entity of resource.
+    """
+    pass
+
+
+@API.route('/characteristicGroups')
+def get_characteristic_groups():
+    """Characteristic Groups resource collection GET method.
+
+    Returns:
+        json: Collection for resource.
+    """
+    pass
+
+
+@API.route('/characteristicGroups/<code>')
+def get_characteristic_group(code):
+    """Characteristi Groups resource entity GET method.
 
     Args:
         code (str): Identification for resource entity.
@@ -221,16 +335,12 @@ def get_resources():
     Returns:
         json: List of resources.
     """
-    json_obj = {
-        'resources': [{
-            'name': 'countries',
-            'resource': url_for('api.get_surveys', _external=True)
-        }, {
-            'name': 'surveys',
-            'resource': url_for('api.get_countries', _external=True)
-        }, {
-            'name': 'texts',
-            'resource': url_for('api.get_texts', _external=True)
-        }]
-    }
-    return jsonify(json_obj)
+    return jsonify({
+        resource: {
+            'name': resource,
+            'resource':
+                url_for('api.get_'+info['aliases']['db']['plural'],
+                        _external=True)
+        }
+        for resource, info in RESOURCE_INFO.items()
+    })
