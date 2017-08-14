@@ -4,6 +4,97 @@ from ..models import Country, EnglishString, Survey, Indicator, Data
 
 
 api = Blueprint('api', __name__)
+RESOURCE_INFO = {
+    'characteristics': {
+        'aliases': {
+            'api': {
+                'singular': 'characteristic',
+                'plural': 'characteristics'
+            },
+            'db': {
+                'singular': 'characteristic',
+                'plural': 'characteristics'
+            }
+        }
+    },
+    'characteristicGroups': {
+        'aliases': {
+            'api': {
+                'singular': 'characteristicGroup',
+                'plural': 'characteristicGroups'
+            },
+            'db': {
+                'singular': 'characteristic_group',
+                'plural': 'characteristic_groups'
+            }
+        }
+    },
+    'countries': {
+        'aliases': {
+            'api': {
+                'singular': 'country',
+                'plural': 'countries'
+            },
+            'db': {
+                'singular': 'country',
+                'plural': 'countries'
+            }
+        }
+    },
+    'data': {
+        'aliases': {
+            'api': {
+                'singular': 'datum',
+                'plural': 'data'
+            },
+            'db': {
+                'singular': 'datum',
+                'plural': 'data'
+            }
+        }
+    },
+    'indicators': {
+        'aliases': {
+            'api': {
+                'singular': 'indicator',
+                'plural': 'indicators'
+            },
+            'db': {
+                'singular': 'indicator',
+                'plural': 'indicators'
+            }
+        }
+    },
+    'surveys': {
+        'aliases': {
+            'api': {
+                'singular': 'survey',
+                'plural': 'surveys'
+            },
+            'db': {
+                'singular': 'survey',
+                'plural': 'surveys'
+            }
+        }
+    },
+    'texts': {
+        'aliases': {
+            'api': {
+                'singular': 'text',
+                'plural': 'texts'
+            },
+            'db': {
+                'singular': 'text',
+                'plural': 'texts'
+            }
+        }
+    },
+}
+# RESOURCES_under_consideration =\
+#     [['api_singular', 'api_plural', 'db_singular', 'db_plural'],
+#      ['characteristic', 'characteristics', 'characteristic',
+#       'characteristics'],
+#      ['...', '...', '...', '...']]
 
 
 @api.route('/')
@@ -68,12 +159,35 @@ def get_indicator(code):
 
 
 @api.route('/characteristics')
-def get_characterstics():
+def get_characteristics():
     pass
 
 
 @api.route('/characteristics/<code>')
 def get_characteristic(code):
+    pass
+
+
+@api.route('/characteristicGroups')
+def get_characteristic_groups():
+    """Characteristic Groups resource collection GET method.
+
+    Returns:
+        json: Collection for resource.
+    """
+    pass
+
+
+@api.route('/characteristicGroups/<code>')
+def get_characteristic_group(code):
+    """Characteristi Groups resource entity GET method.
+
+    Args:
+        code (str): Identification for resource entity.
+
+    Returns:
+        json: Entity of resource.
+    """
     pass
 
 
@@ -122,16 +236,12 @@ def get_text(uuid):
 
 @api.route('/resources')
 def get_resources():
-    json_obj = {
-        'resources': [{
-            'name': 'countries',
-            'resource': url_for('api.get_surveys', _external=True)
-        },{
-            'name': 'surveys',
-            'resource': url_for('api.get_countries', _external=True)
-        },{
-            'name': 'texts',
-            'resource': url_for('api.get_texts', _external=True)
-        }]
-    }
-    return jsonify(json_obj)
+    return jsonify({
+        resource: {
+            'name': resource,
+            'resource':
+                url_for('api.get_'+info['aliases']['db']['plural'],
+                        _external=True)
+        }
+        for resource, info in RESOURCE_INFO.items()
+    })
