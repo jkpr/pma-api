@@ -14,7 +14,7 @@ def say_hello():
     Returns:
         json: List of resources.
     """
-    return '<h1>HELLO FLASK</h1>'
+    return get_resources()
 
 
 @API.route('/countries')
