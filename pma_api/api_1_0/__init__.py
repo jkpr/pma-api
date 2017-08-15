@@ -251,6 +251,7 @@ def get_characteristic_group(code):
 
 @API.route('/data')
 def get_data():
+<<<<<<< HEAD
     """Data resource collection GET method.
 
     Returns:
@@ -259,12 +260,14 @@ def get_data():
     all_data = data_refined_query(request.args)
     # all_data = Data.query.all()
     json_obj = {
+=======
+    # all_data = data_refined_query(request.args)  # TODO: Put this back.
+    all_data = Data.query.all()
+    return jsonify(json_obj = {
+>>>>>>> bugfix_endpoint_errors
         'resultsSize': len(all_data),
-        'results': [
-            d.full_json() for d in all_data
-        ]
-    }
-    return jsonify(json_obj)
+        'results': [rec.full_json() for rec in all_data]
+    })
 
 
 def data_refined_query(args):
@@ -306,11 +309,10 @@ def get_texts():
         json: Collection for resource.
     """
     english_strings = EnglishString.query.all()
-    json_obj = {
+    return jsonify(json_obj = {
         'resultsSize': len(english_strings),
-        'results': [eng.url_for() for eng in english_strings]
-    }
-    return jsonify(json_obj)
+        'results': [d.to_json() for d in english_strings]
+    })
 
 
 @API.route('/texts/<uuid>')
