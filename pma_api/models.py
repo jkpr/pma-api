@@ -775,9 +775,6 @@ class EnglishString(ApiModel):
 
         Contains URL for resource entity.
 
-        Args:
-            lang (str): The language, if specified.
-
         Returns:
             dict: API response ready to be JSONified.
         """
