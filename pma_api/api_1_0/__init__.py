@@ -14,11 +14,10 @@ def say_hello():
 @api.route('/countries')
 def get_countries():
     countries = Country.query.all()
-    json_obj = {
+    return jsonify({
         'resultsSize': len(countries),
-        'results': [c.url_for() for c in countries]
-    }
-    return jsonify(json_obj)
+        'results': [c.full_json() for c in countries]
+    })
 
 
 @api.route('/countries/<code>')
@@ -32,13 +31,12 @@ def get_country(code):
 @api.route('/surveys')
 def get_surveys():
     # Query by year, country, round
-    print(request.args)
+    # print(request.args)
     surveys = Survey.query.all()
-    json_obj = {
+    return jsonify({
         'resultsSize': len(surveys),
         'results': [s.full_json() for s in surveys]
-    }
-    return jsonify(json_obj)
+    })
 
 
 @api.route('/surveys/<code>')
@@ -51,13 +49,12 @@ def get_survey(code):
 @api.route('/indicators')
 def get_indicators():
     indicators = Indicator.query.all()
-    json_obj = {
+    return jsonify({
         'resultsSize': len(indicators),
         'results': [
             i.full_json(endpoint='api.get_indicator') for i in indicators
         ]
-    }
-    return jsonify(json_obj)
+    })
 
 
 @api.route('/indicators/<code>')
@@ -79,15 +76,12 @@ def get_characteristic(code):
 
 @api.route('/data')
 def get_data():
-    all_data = data_refined_query(request.args)
-    # all_data = Data.query.all()
-    json_obj = {
+    # all_data = data_refined_query(request.args)  # TODO: Put this back.
+    all_data = Data.query.all()
+    return jsonify(json_obj = {
         'resultsSize': len(all_data),
-        'results': [
-            d.full_json() for d in all_data
-        ]
-    }
-    return jsonify(json_obj)
+        'results': [d.full_json() for d in all_data]
+    })
 
 
 def data_refined_query(args):
@@ -107,10 +101,11 @@ def get_datum(uuid):
 @api.route('/texts')
 def get_texts():
     english_strings = EnglishString.query.all()
-    json_obj = {
+    return jsonify(json_obj = {
         'resultsSize': len(english_strings),
-        'results': [eng.url_for() for eng in english_strings]
-    }
+        'results': [d.to_json() for d in english_strings]
+    })
+
 
 
 @api.route('/texts/<uuid>')
@@ -122,7 +117,7 @@ def get_text(uuid):
 
 @api.route('/resources')
 def get_resources():
-    json_obj = {
+    return jsonify({
         'resources': [{
             'name': 'countries',
             'resource': url_for('api.get_surveys', _external=True)
@@ -133,5 +128,4 @@ def get_resources():
             'name': 'texts',
             'resource': url_for('api.get_texts', _external=True)
         }]
-    }
-    return jsonify(json_obj)
+    })
