@@ -116,11 +116,10 @@ def get_countries():
         json: Collection for resource.
     """
     countries = Country.query.all()
-    json_obj = {
+    return jsonify({
         'resultsSize': len(countries),
-        'results': [c.url_for() for c in countries]
-    }
-    return jsonify(json_obj)
+        'results': [c.full_json() for c in countries]
+    })
 
 
 @API.route('/countries/<code>')
@@ -147,13 +146,12 @@ def get_surveys():
         json: Collection for resource.
     """
     # Query by year, country, round
-    print(request.args)
+    # print(request.args)
     surveys = Survey.query.all()
-    json_obj = {
+    return jsonify({
         'resultsSize': len(surveys),
         'results': [s.full_json() for s in surveys]
-    }
-    return jsonify(json_obj)
+    })
 
 
 @API.route('/surveys/<code>')
@@ -179,13 +177,12 @@ def get_indicators():
         json: Collection for resource.
     """
     indicators = Indicator.query.all()
-    json_obj = {
+    return jsonify({
         'resultsSize': len(indicators),
         'results': [
             i.full_json(endpoint='api.get_indicator') for i in indicators
         ]
-    }
-    return jsonify(json_obj)
+    })
 
 
 @API.route('/indicators/<code>')
@@ -251,22 +248,16 @@ def get_characteristic_group(code):
 
 @API.route('/data')
 def get_data():
-<<<<<<< HEAD
     """Data resource collection GET method.
 
     Returns:
         json: Collection for resource.
     """
-    all_data = data_refined_query(request.args)
-    # all_data = Data.query.all()
-    json_obj = {
-=======
     # all_data = data_refined_query(request.args)  # TODO: Put this back.
     all_data = Data.query.all()
     return jsonify(json_obj = {
->>>>>>> bugfix_endpoint_errors
         'resultsSize': len(all_data),
-        'results': [rec.full_json() for rec in all_data]
+        'results': [d.full_json() for d in all_data]
     })
 
 
