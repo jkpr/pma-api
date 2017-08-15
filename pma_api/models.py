@@ -13,6 +13,20 @@ class ApiModel(db.Model):
 
     __abstract__ = True
 
+    ignore_field_prefix = '__'
+
+    @staticmethod
+    def prune_ignored_fields(kwargs):
+        """Prune ignored fields.
+
+        Args:
+            **kwargs: Keyword arguments.
+        """
+        return {
+            key: val for key, val in kwargs.items()
+            if not key.startswith(ApiModel.ignore_field_prefix)
+        }
+
     @staticmethod
     def update_kwargs_english(kwargs, source_key, target_key):
         """Translate API query parameters to equivalent in model.
@@ -136,6 +150,7 @@ class Indicator(ApiModel):
         parameter names to model field names, (2) Reformats any empty strings,
         and (3) Calls super init.
         """
+        kwargs = self.prune_ignored_fields(kwargs)
         self.update_kwargs_english(kwargs, 'level1', 'level1_id')
         self.update_kwargs_english(kwargs, 'level2', 'level2_id')
         self.update_kwargs_english(kwargs, 'level3', 'level3_id')
@@ -213,24 +228,9 @@ class CharacteristicGroup(ApiModel):
         values into the EnglishString translation table if not present, and
         (4) calls super init.
         """
-        # 1. Remove columns that are unnecessary
-        label = kwargs.pop('label', None)
-        defn = kwargs.pop('definition', None)
-        # 2. Fill in gaps
-        if not kwargs['label_id']:
-            label_eng = EnglishString.query.filter_by(english=label).first()
-            if label_eng:
-                kwargs['label_id'] = label_eng.id
-            else:
-                new_label_eng = EnglishString.insert_unique(label)
-                kwargs['label_id'] = new_label_eng.id
-        if not kwargs['definition_id']:
-            defn_eng = EnglishString.query.filter_by(english=defn).first()
-            if defn_eng:
-                kwargs['definition_id'] = defn_eng.id
-            else:
-                new_defn_eng = EnglishString.insert_unique(defn)
-                kwargs['definition_id'] = new_defn_eng.id
+        kwargs = self.prune_ignored_fields(kwargs)
+        self.update_kwargs_english(kwargs, 'label', 'label_id')
+        self.update_kwargs_english(kwargs, 'definition', 'definition_id')
         super(CharacteristicGroup, self).__init__(**kwargs)
 
     def full_json(self, lang=None, jns=False, index=None):
@@ -310,24 +310,9 @@ class Characteristic(ApiModel):
         Raises:
             AttributeError: If valid ID is not found for CharacteristicGroup.
         """
-        # 1. Remove columns that are unnecessary
-        label = kwargs.pop('label', None)
-        char_grp_code = kwargs.pop('char_grp_code', None)
-        # 2. Fill in gaps
-        if not kwargs['char_grp_id']:
-            found = \
-                CharacteristicGroup.query.filter_by(code=char_grp_code).first()
-            if found:
-                kwargs['char_grp_id'] = found.id
-            else:
-                raise AttributeError(char_grp_code)
-        if not kwargs['label_id']:
-            eng = EnglishString.query.filter_by(english=label).first()
-            if eng:
-                kwargs['label_id'] = found.id
-            else:
-                new_string = EnglishString.insert_unique(label)
-                kwargs['label_id'] = new_string.id
+        kwargs = self.prune_ignored_fields(kwargs)
+        self.update_kwargs_english(kwargs, 'label', 'label_id')
+        self.update_kwargs_english(kwargs, 'char_grp_code', 'char_grp_id')
         super(Characteristic, self).__init__(**kwargs)
 
     def full_json(self, lang=None, jns=False, index=None):
@@ -416,13 +401,13 @@ class Data(ApiModel):
     indicator_id = db.Column(db.Integer, db.ForeignKey('indicator.id'))
     char1_id = db.Column(db.Integer, db.ForeignKey('characteristic.id'))
     char2_id = db.Column(db.Integer, db.ForeignKey('characteristic.id'))
-    subgeo_id = db.Column(db.Integer, db.ForeignKey('geography.id'))
+    geo_id = db.Column(db.Integer, db.ForeignKey('geography.id'))
 
     survey = db.relationship('Survey', foreign_keys=survey_id)
     indicator = db.relationship('Indicator', foreign_keys=indicator_id)
     char1 = db.relationship('Characteristic', foreign_keys=char1_id)
     char2 = db.relationship('Characteristic', foreign_keys=char2_id)
-    subgeo = db.relationship('Geography', foreign_keys=subgeo_id)
+    geo = db.relationship('Geography', foreign_keys=geo_id)
 
     def __init__(self, **kwargs):
         """Initialization for instance of model.
@@ -431,15 +416,12 @@ class Data(ApiModel):
         parameter names to model field names, (2) Reformats any empty strings,
         (3) Sets a randomly generated code string, and (4) Calls super init.
         """
+        kwargs = self.prune_ignored_fields(kwargs)
         self.set_kwargs_id(kwargs, 'survey_code', 'survey_id', Survey)
-        self.set_kwargs_id(
-            kwargs, 'indicator_code', 'indicator_id', Indicator)
-        self.set_kwargs_id(
-            kwargs, 'char1_code', 'char1_id', Characteristic, False)
-        self.set_kwargs_id(
-            kwargs, 'char2_code', 'char2_id', Characteristic, False)
-        self.set_kwargs_id(
-            kwargs, 'subgeo_code', 'subgeo_id', Geography, False)
+        self.set_kwargs_id(kwargs, 'indicator_code', 'indicator_id', Indicator)
+        self.set_kwargs_id(kwargs, 'char1_code', 'char1_id', Characteristic, False)
+        self.set_kwargs_id(kwargs, 'char2_code', 'char2_id', Characteristic, False)
+        self.set_kwargs_id(kwargs, 'geo_code', 'geo_id', Geography, False)
         self.empty_to_none(kwargs)
         kwargs['code'] = next64()
         super(Data, self).__init__(**kwargs)
@@ -483,8 +465,8 @@ class Data(ApiModel):
             char2_json = self.char2.full_json(lang, jns=True, index=2)
         else:
             char2_json = Characteristic.none_json(lang, jns=True, index=2)
-        if self.subgeo is not None:
-            subgeo_json = self.subgeo.full_json(lang, jns=True)
+        if self.geo is not None:
+            subgeo_json = self.geo.full_json(lang, jns=True)
         else:
             subgeo_json = Geography.none_json(lang, jns=True)
 
@@ -600,9 +582,10 @@ class Survey(ApiModel):
             AttributeError: If valid ID is not found for Country.
         """
         # 1. Remove columns that are unnecessary
+        kwargs = self.prune_ignored_fields(kwargs)
         label = kwargs.pop('label', None)
-        country_code = kwargs.pop('country_code', None)
-        geography_code = kwargs.pop('geography_code', None)
+        # country_code = kwargs.pop('country_code', None)
+        # geography_code = kwargs.pop('geography_code', None)
         start_date = kwargs.pop('start_date', None)
         end_date = kwargs.pop('end_date', None)
         # 2. Remove columns that are unnecessary
@@ -613,7 +596,10 @@ class Survey(ApiModel):
             else:
                 new_label_eng = EnglishString.insert_unique(label)
                 kwargs['label_id'] = new_label_eng.id
-        self.set_kwargs_id(kwargs, 'country_code', 'country_id', Country, required=True)
+        self.set_kwargs_id(kwargs, 'country_code', 'country_id', Country,
+                           required=True)
+        self.set_kwargs_id(kwargs, 'geography_code', 'geography_id', Geography,
+                           required=False)
         if start_date:
             kwargs['start_date'] = datetime.strptime(start_date, '%Y-%m-%d')
         if end_date:
@@ -642,6 +628,7 @@ class Country(ApiModel):
         Does a few things: (1) Updates instance based on mapping from API query
         parameter names to model field names, and (2) calls super init.
         """
+        kwargs = self.prune_ignored_fields(kwargs)
         self.update_kwargs_english(kwargs, 'label', 'label_id')
         super(Country, self).__init__(**kwargs)
 
