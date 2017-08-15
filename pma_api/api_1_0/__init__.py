@@ -253,8 +253,8 @@ def get_data():
     Returns:
         json: Collection for resource.
     """
-    # all_data = data_refined_query(request.args)  # TODO: Put this back.
-    all_data = Data.query.all()
+    all_data = data_refined_query(request.args)
+    # all_data = Data.query.all()
     return jsonify(json_obj = {
         'resultsSize': len(all_data),
         'results': [d.full_json() for d in all_data]
