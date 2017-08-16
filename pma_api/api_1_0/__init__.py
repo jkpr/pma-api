@@ -4,10 +4,10 @@ from flask import Blueprint, jsonify, request, url_for
 from ..models import Country, EnglishString, Survey, Indicator, Data
 
 
-api = Blueprint('api', __name__)
+API = Blueprint('api', __name__)
 
 
-@api.route('/')
+@API.route('/')
 def say_hello():
     """API Root.
 
@@ -17,7 +17,7 @@ def say_hello():
     return '<h1>HELLO FLASK</h1>'
 
 
-@api.route('/countries')
+@API.route('/countries')
 def get_countries():
     """Country resource collection GET method.
 
@@ -32,7 +32,7 @@ def get_countries():
     return jsonify(json_obj)
 
 
-@api.route('/countries/<code>')
+@API.route('/countries/<code>')
 def get_country(code):
     """Country resource entity GET method.
 
@@ -48,7 +48,7 @@ def get_country(code):
     return jsonify(json_obj)
 
 
-@api.route('/surveys')
+@API.route('/surveys')
 def get_surveys():
     """Survey resource collection GET method.
 
@@ -65,7 +65,7 @@ def get_surveys():
     return jsonify(json_obj)
 
 
-@api.route('/surveys/<code>')
+@API.route('/surveys/<code>')
 def get_survey(code):
     """Survey resource entity GET method.
 
@@ -80,7 +80,7 @@ def get_survey(code):
     return jsonify(json_obj)
 
 
-@api.route('/indicators')
+@API.route('/indicators')
 def get_indicators():
     """Indicator resource collection GET method.
 
@@ -97,7 +97,7 @@ def get_indicators():
     return jsonify(json_obj)
 
 
-@api.route('/indicators/<code>')
+@API.route('/indicators/<code>')
 def get_indicator(code):
     """Indicator resource entity GET method.
 
@@ -112,7 +112,7 @@ def get_indicator(code):
     return jsonify(json_obj)
 
 
-@api.route('/characteristics')
+@API.route('/characteristics')
 def get_characterstics():
     """Characteristics resource collection GET method.
 
@@ -122,7 +122,7 @@ def get_characterstics():
     pass
 
 
-@api.route('/characteristics/<code>')
+@API.route('/characteristics/<code>')
 def get_characteristic(code):
     """Characteristic resource entity GET method.
 
@@ -135,7 +135,7 @@ def get_characteristic(code):
     pass
 
 
-@api.route('/data')
+@API.route('/data')
 def get_data():
     """Data resource collection GET method.
 
@@ -168,7 +168,8 @@ def data_refined_query(args):
     results = qset.all()
     return results
 
-@api.route('/data/<uuid>')
+
+@API.route('/data/<uuid>')
 def get_datum(uuid):
     """Data resource entity GET method.
 
@@ -183,7 +184,7 @@ def get_datum(uuid):
     return jsonify(json_obj)
 
 
-@api.route('/texts')
+@API.route('/texts')
 def get_texts():
     """Text resource collection GET method.
 
@@ -197,7 +198,7 @@ def get_texts():
     }
 
 
-@api.route('/texts/<uuid>')
+@API.route('/texts/<uuid>')
 def get_text(uuid):
     """Text resource entity GET method.
 
@@ -212,7 +213,7 @@ def get_text(uuid):
     return jsonify(json_obj)
 
 
-@api.route('/resources')
+@API.route('/resources')
 def get_resources():
     """API resource route..
 
@@ -223,10 +224,10 @@ def get_resources():
         'resources': [{
             'name': 'countries',
             'resource': url_for('api.get_surveys', _external=True)
-        },{
+        }, {
             'name': 'surveys',
             'resource': url_for('api.get_countries', _external=True)
-        },{
+        }, {
             'name': 'texts',
             'resource': url_for('api.get_texts', _external=True)
         }]

@@ -293,7 +293,8 @@ class Characteristic(ApiModel):
     code = db.Column(db.String, unique=True)
     label_id = db.Column(db.Integer, db.ForeignKey('english_string.id'))
     order = db.Column(db.Integer, unique=True)
-    char_grp_id = db.Column(db.Integer, db.ForeignKey('characteristic_group.id'))
+    char_grp_id = \
+        db.Column(db.Integer, db.ForeignKey('characteristic_group.id'))
 
     char_grp = db.relationship('CharacteristicGroup')
     label = db.relationship('EnglishString', foreign_keys=label_id)
@@ -314,7 +315,8 @@ class Characteristic(ApiModel):
         char_grp_code = kwargs.pop('char_grp_code', None)
         # 2. Fill in gaps
         if not kwargs['char_grp_id']:
-            found = CharacteristicGroup.query.filter_by(code=char_grp_code).first()
+            found = \
+                CharacteristicGroup.query.filter_by(code=char_grp_code).first()
             if found:
                 kwargs['char_grp_id'] = found.id
             else:
@@ -325,7 +327,7 @@ class Characteristic(ApiModel):
                 kwargs['label_id'] = found.id
             else:
                 new_string = EnglishString.insert_unique(label)
-                kwargs['label_id']= new_string.id
+                kwargs['label_id'] = new_string.id
         super(Characteristic, self).__init__(**kwargs)
 
     def full_json(self, lang=None, jns=False, index=None):
@@ -353,7 +355,8 @@ class Characteristic(ApiModel):
         if jns:
             result = self.namespace(result, 'char', index=index)
 
-        char_grp_json = self.char_grp.full_json(lang=lang, jns=True, index=index)
+        char_grp_json = \
+            self.char_grp.full_json(lang=lang, jns=True, index=index)
 
         result.update(char_grp_json)
         return result
@@ -388,7 +391,8 @@ class Characteristic(ApiModel):
         }
         if jns:
             result = ApiModel.namespace(result, 'char', index=index)
-        char_grp_json = CharacteristicGroup.none_json(lang, jns=True, index=index)
+        char_grp_json = \
+            CharacteristicGroup.none_json(lang, jns=True, index=index)
         result.update(char_grp_json)
         return result
 
@@ -428,10 +432,14 @@ class Data(ApiModel):
         (3) Sets a randomly generated code string, and (4) Calls super init.
         """
         self.set_kwargs_id(kwargs, 'survey_code', 'survey_id', Survey)
-        self.set_kwargs_id(kwargs, 'indicator_code', 'indicator_id', Indicator)
-        self.set_kwargs_id(kwargs, 'char1_code', 'char1_id', Characteristic, False)
-        self.set_kwargs_id(kwargs, 'char2_code', 'char2_id', Characteristic, False)
-        self.set_kwargs_id(kwargs, 'subgeo_code', 'subgeo_id', Geography, False)
+        self.set_kwargs_id(
+            kwargs, 'indicator_code', 'indicator_id', Indicator)
+        self.set_kwargs_id(
+            kwargs, 'char1_code', 'char1_id', Characteristic, False)
+        self.set_kwargs_id(
+            kwargs, 'char2_code', 'char2_id', Characteristic, False)
+        self.set_kwargs_id(
+            kwargs, 'subgeo_code', 'subgeo_id', Geography, False)
         self.empty_to_none(kwargs)
         kwargs['code'] = next64()
         super(Data, self).__init__(**kwargs)
@@ -520,7 +528,7 @@ class Survey(ApiModel):
             dict: Dict of key 'url' and value of URL for resource entity.
         """
         return {'url': url_for('api.get_survey', code=self.pma_code,
-                _external=True)}
+                               _external=True)}
 
     def full_json(self, lang=None, jns=False):
         """Return dictionary ready to convert to JSON as response.
@@ -568,7 +576,7 @@ class Survey(ApiModel):
         """
         return {
             'url': url_for('api.get_survey', code=self.pma_code,
-                _external=True),
+                           _external=True),
             'order': self.order,
             'type': self.type,
             'year': self.year,
@@ -644,7 +652,7 @@ class Country(ApiModel):
             dict: Dict of key 'url' and value of URL for resource entity.
         """
         return {'url': url_for('api.get_country', code=self.code,
-                _external=True)}
+                               _external=True)}
 
     def full_json(self, lang=None, jns=False):
         """Return dictionary ready to convert to JSON as response.
@@ -672,7 +680,6 @@ class Country(ApiModel):
 
         return result
 
-
     def to_json(self, lang=None):
         """Return dictionary ready to convert to JSON as response.
 
@@ -686,7 +693,7 @@ class Country(ApiModel):
         """
         json_obj = {
             'url': url_for('api.get_country', code=self.code,
-                _external=True),
+                           _external=True),
             'order': self.order,
             'subregion': self.subregion,
             'region': self.region,
@@ -697,12 +704,12 @@ class Country(ApiModel):
         else:
             translations = self.label.translations
             translation = next(iter(t for t in translations if t.language_code
-                == lang.lower()), None)
+                                    == lang.lower()), None)
             if translation:
                 json_obj['label'] = translation.translation
             else:
-                json_obj['label'] = url_for('api.get_text',
-                    uuid=self.label.uuid, _external=True)
+                json_obj['label'] = url_for(
+                    'api.get_text', uuid=self.label.uuid, _external=True)
         return json_obj
 
     def __repr__(self):
@@ -771,7 +778,7 @@ class EnglishString(ApiModel):
         result = self.english
         if lang is not None and lang.lower() != 'en':
             found = next(iter(t for t in self.translations if t.language_code
-                == lang.lower()), None)
+                              == lang.lower()), None)
             if found is not None:
                 result = found.translation
         return result
