@@ -115,7 +115,15 @@ def get_countries():
     Returns:
         json: Collection for resource.
     """
-    countries = Country.query.all()
+    model = Country
+    countries = model.query.all()
+
+    print('\n\n', request.args)  # Testing
+    validity, messages = model.validate_query(request.args)
+    print(validity)
+    print(messages)
+    print('\n\n')
+
     return jsonify({
         'resultsSize': len(countries),
         'results': [c.full_json() for c in countries]
@@ -255,7 +263,7 @@ def get_data():
     """
     all_data = data_refined_query(request.args)
     # all_data = Data.query.all()
-    return jsonify(json_obj = {
+    return jsonify({
         'resultsSize': len(all_data),
         'results': [d.full_json() for d in all_data]
     })
@@ -300,7 +308,7 @@ def get_texts():
         json: Collection for resource.
     """
     english_strings = EnglishString.query.all()
-    return jsonify(json_obj = {
+    return jsonify({
         'resultsSize': len(english_strings),
         'results': [d.to_json() for d in english_strings]
     })
