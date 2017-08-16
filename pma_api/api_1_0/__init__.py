@@ -232,16 +232,3 @@ def get_text(uuid):
     text = EnglishString.query.filter_by(uuid=uuid).first()
     json_obj = text.to_json()
     return jsonify(json_obj)
-
-
-@api.route('/resources')
-def get_resources():
-    return jsonify({
-        resource: {
-            'name': resource,
-            'resource':
-                url_for('api.get_'+info['aliases']['db']['plural'],
-                        _external=True)
-        }
-        for resource, info in RESOURCE_INFO.items()
-    })
