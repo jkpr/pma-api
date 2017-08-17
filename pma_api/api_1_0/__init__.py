@@ -12,7 +12,8 @@ def full_json_collection(model, prequeried=False):
     """Return collection in full JSON format.
 
     Args:
-        model (class): SqlAlchemy model class.
+        model (class|list): SqlAlchemy model class if prequeried is False,
+            otherwise a list.
         prequeried (bool): If model has already been queried.
 
     returns:
