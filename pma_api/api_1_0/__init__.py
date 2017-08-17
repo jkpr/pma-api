@@ -10,6 +10,23 @@ __version__ = '1.0'
 from . import collection, datalab
 
 
+def full_json_collection(model, prequeried=False):
+    """Return collection in full JSON format.
+
+    Args:
+        model (class): SqlAlchemy model class.
+        prequeried (bool): If model has already been queried.
+
+    returns:
+        json: Jsonified response.
+    """
+    collection = model if prequeried else model.query.all()
+    return jsonify({
+        'resultsSize': len(collection),
+        'results': [record.full_json() for record in collection]
+    })
+
+
 @api.route('/')
 def root():
     """Root route.
