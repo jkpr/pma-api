@@ -131,7 +131,11 @@ def get_texts():
     Returns:
         json: Collection for resource.
     """
-    return EnglishString().api_query_response(request.args)
+    english_strings = EnglishString.query.all()
+    return jsonify({
+        'resultsSize': len(english_strings),
+        'results': [d.to_json() for d in english_strings]
+    })
 
 
 @api.route('/texts/<uuid>')
