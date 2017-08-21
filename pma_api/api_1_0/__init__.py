@@ -7,24 +7,6 @@ from ..models import Country, EnglishString, Survey, Indicator, Data
 api = Blueprint('api', __name__)
 
 
-def full_json_collection(model, prequeried=False):
-    """Return collection in full JSON format.
-
-    Args:
-        model (class|list): SqlAlchemy model class if prequeried is False,
-            otherwise a list.
-        prequeried (bool): If model has already been queried.
-
-    returns:
-        json: Jsonified response.
-    """
-    collection = model if prequeried else model.query.all()
-    return jsonify({
-        'resultsSize': len(collection),
-        'results': [record.full_json() for record in collection]
-    })
-
-
 @api.route('/')
 def root():
     """Root route.
@@ -47,10 +29,7 @@ def get_countries():
     Returns:
         json: Collection for resource.
     """
-    # validity, messages = model.validate_query(request.args)  # TODO: Finish.
-    # print('\n\n', validity, messages, '\n\n')  # Testing
-
-    return full_json_collection(Country)
+    return Country().api_query_response(request.args)
 
 
 @api.route('/countries/<code>')
@@ -77,7 +56,7 @@ def get_surveys():
         json: Collection for resource.
     """
     # Query by year, country, round
-    return full_json_collection(Survey)
+    return Survey().api_query_response(request.args)
 
 
 @api.route('/surveys/<code>')
@@ -102,7 +81,7 @@ def get_indicators():
     Returns:
         json: Collection for resource.
     """
-    return full_json_collection(Indicator)
+    return Indicator().api_query_response(request.args)
 
 
 @api.route('/indicators/<code>')
@@ -127,24 +106,7 @@ def get_data():
     Returns:
         json: Collection for resource.
     """
-    refined_all_data = data_refined_query(request.args)
-    return full_json_collection(refined_all_data, prequeried=True)
-
-
-def data_refined_query(args):
-    """Data refined query.
-
-    *Args:
-        survey (str): If present, filter by survey entities.
-
-    Returns:
-        dict: Filtered query data.
-    """
-    qset = Data.query
-    if 'survey' in args:
-        qset = qset.filter(Data.survey.has(code=args['survey']))
-    results = qset.all()
-    return results
+    return Data().api_query_response(request.args)
 
 
 @api.route('/data/<uuid>')
@@ -169,7 +131,7 @@ def get_texts():
     Returns:
         json: Collection for resource.
     """
-    return full_json_collection(EnglishString)
+    return EnglishString().api_query_response(request.args)
 
 
 @api.route('/texts/<uuid>')
