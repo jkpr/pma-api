@@ -8,6 +8,24 @@ from ..models import Country, EnglishString, Survey, Indicator, Data
 api = Blueprint('api', __name__)
 
 
+def full_json_collection(model, prequeried=False):
+    """Return collection in full JSON format.
+
+    Args:
+        model (class|list): SqlAlchemy model class if prequeried is False,
+            otherwise a list.
+        prequeried (bool): If model has already been queried.
+
+    returns:
+        json: Jsonified response.
+    """
+    collection = model if prequeried else model.query.all()
+    return jsonify({
+        'resultsSize': len(collection),
+        'results': [record.full_json() for record in collection]
+    })
+
+
 @api.route('/')
 def root():
     """Root route.
@@ -30,19 +48,10 @@ def get_countries():
     Returns:
         json: Collection for resource.
     """
-    model = Country
-    countries = model.query.all()
+    # validity, messages = model.validate_query(request.args)  # TODO: Finish.
+    # print('\n\n', validity, messages, '\n\n')  # Testing
 
-    print('\n\n', request.args)  # Testing
-    validity, messages = model.validate_query(request.args)
-    print(validity)
-    print(messages)
-    print('\n\n')
-
-    return jsonify({
-        'resultsSize': len(countries),
-        'results': [c.full_json() for c in countries]
-    })
+    return full_json_collection(Country)
 
 
 @api.route('/countries/<code>')
@@ -69,12 +78,7 @@ def get_surveys():
         json: Collection for resource.
     """
     # Query by year, country, round
-    # print(request.args)
-    surveys = Survey.query.all()
-    return jsonify({
-        'resultsSize': len(surveys),
-        'results': [s.full_json() for s in surveys]
-    })
+    return full_json_collection(Survey)
 
 
 @api.route('/surveys/<code>')
@@ -99,13 +103,7 @@ def get_indicators():
     Returns:
         json: Collection for resource.
     """
-    indicators = Indicator.query.all()
-    return jsonify({
-        'resultsSize': len(indicators),
-        'results': [
-            i.full_json(endpoint='api.get_indicator') for i in indicators
-        ]
-    })
+    return full_json_collection(Indicator)
 
 
 @api.route('/indicators/<code>')
@@ -130,12 +128,8 @@ def get_data():
     Returns:
         json: Collection for resource.
     """
-    all_data = data_refined_query(request.args)
-    # all_data = Data.query.all()
-    return jsonify({
-        'resultsSize': len(all_data),
-        'results': [d.full_json() for d in all_data]
-    })
+    refined_all_data = data_refined_query(request.args)
+    return full_json_collection(refined_all_data, prequeried=True)
 
 
 def data_refined_query(args):
@@ -176,11 +170,7 @@ def get_texts():
     Returns:
         json: Collection for resource.
     """
-    english_strings = EnglishString.query.all()
-    return jsonify({
-        'resultsSize': len(english_strings),
-        'results': [d.to_json() for d in english_strings]
-    })
+    return full_json_collection(EnglishString)
 
 
 @api.route('/texts/<uuid>')
