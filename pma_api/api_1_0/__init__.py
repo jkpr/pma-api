@@ -77,9 +77,12 @@ def get_datalab_init():
     """Get datalab combos."""
     return jsonify(DatalabData.datalab_init())
 
+
 @api.route('/datalab')
 def get_datalab():
+    """Get datalab routes.."""
     return get_datalab_resources()
+
 
 @api.route('/datalab/resources')
 def get_datalab_resources():
