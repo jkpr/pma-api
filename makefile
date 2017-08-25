@@ -76,3 +76,13 @@ shell:
 
 db:
 	${MANAGE} initdb --overwrite
+
+ssh:
+	heroku run bash --app pma-api
+ssh_production: ssh
+
+ssh_staging:
+	heroku run bash --app pma-api-staging
+
+gunicorn:
+	gunicorn pma_api:app
