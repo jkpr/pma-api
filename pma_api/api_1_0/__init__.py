@@ -289,25 +289,3 @@ def get_datalab_combos():
 def get_datalab_init():
     """Get datalab combos."""
     return jsonify(DatalabData.datalab_init())
-
-
-@api.route('/datalab')
-def get_datalab():
-    """Get datalab routes.."""
-    return get_datalab_resources()
-
-
-@api.route('/datalab/resources')
-def get_datalab_resources():
-    """Get datalab routes."""
-    resource_endpoints = (
-        ('init', 'api.get_datalab_init'),
-        ('combos', 'api.get_datalab_combos'),
-        ('data', 'api.get_datalab_data')
-    )
-    return jsonify({
-        'resources': [{
-            'name': name,
-            'resource': url_for(route, _external=True)}
-            for name, route in resource_endpoints]
-    })
