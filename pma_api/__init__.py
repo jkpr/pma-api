@@ -24,7 +24,7 @@ def create_app(config_name):
 
     db.init_app(app)
 
-    from .api_1_0 import api as api_1_0_blueprint
+    from .api_1_0 import api1 as api_1_0_blueprint
     app.register_blueprint(api_1_0_blueprint)
 
     return app
@@ -38,8 +38,10 @@ app.config.from_object(config[config_name])
 
 db.init_app(app)
 
-from .api_1_0 import api as api_1_0_blueprint
-app.register_blueprint(api_1_0_blueprint)
+from .api_1_0 import api1
+from .api_2_0 import api2
+app.register_blueprint(api1)
+app.register_blueprint(api2)
 
 
 def run():

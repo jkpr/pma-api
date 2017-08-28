@@ -5,10 +5,11 @@ from ..queries import DatalabData
 from ..models import Country, EnglishString, Survey, Indicator, Data
 
 
-api = Blueprint('api', __name__)
+api1 = Blueprint('api1', __name__)
 
 
-@api.route('/')
+@api1.route('/')
+@api1.route('/v1/')
 def root():
     """Root route.
 
@@ -23,7 +24,8 @@ def root():
     return get_resources()
 
 
-@api.route('/countries')
+@api1.route('/countries')
+@api1.route('/v1/countries')
 def get_countries():
     """Country resource collection GET method.
 
@@ -45,7 +47,8 @@ def get_countries():
     })
 
 
-@api.route('/countries/<code>')
+@api1.route('/countries/<code>')
+@api1.route('/v1/countries/<code>')
 def get_country(code):
     """Country resource entity GET method.
 
@@ -61,7 +64,8 @@ def get_country(code):
     return jsonify(json_obj)
 
 
-@api.route('/surveys')
+@api1.route('/surveys')
+@api1.route('/v1/surveys')
 def get_surveys():
     """Survey resource collection GET method.
 
@@ -77,7 +81,8 @@ def get_surveys():
     })
 
 
-@api.route('/surveys/<code>')
+@api1.route('/surveys/<code>')
+@api1.route('/v1/surveys/<code>')
 def get_survey(code):
     """Survey resource entity GET method.
 
@@ -92,7 +97,8 @@ def get_survey(code):
     return jsonify(json_obj)
 
 
-@api.route('/indicators')
+@api1.route('/indicators')
+@api1.route('/v1/indicators')
 def get_indicators():
     """Indicator resource collection GET method.
 
@@ -103,12 +109,13 @@ def get_indicators():
     return jsonify({
         'resultsSize': len(indicators),
         'results': [
-            i.full_json(endpoint='api.get_indicator') for i in indicators
+            i.full_json(endpoint='api1.get_indicator') for i in indicators
         ]
     })
 
 
-@api.route('/indicators/<code>')
+@api1.route('/indicators/<code>')
+@api1.route('/v1/indicators/<code>')
 def get_indicator(code):
     """Indicator resource entity GET method.
 
@@ -123,7 +130,8 @@ def get_indicator(code):
     return jsonify(json_obj)
 
 
-@api.route('/data')
+@api1.route('/data')
+@api1.route('/v1/data')
 def get_data():
     """Data resource collection GET method.
 
@@ -154,7 +162,8 @@ def data_refined_query(args):
     return results
 
 
-@api.route('/data/<code>')
+@api1.route('/data/<code>')
+@api1.route('/v1/data/<code>')
 def get_datum(code):
     """Data resource entity GET method.
 
@@ -169,7 +178,8 @@ def get_datum(code):
     return jsonify(json_obj)
 
 
-@api.route('/texts')
+@api1.route('/texts')
+@api1.route('/v1/texts')
 def get_texts():
     """Text resource collection GET method.
 
@@ -183,7 +193,8 @@ def get_texts():
     })
 
 
-@api.route('/texts/<code>')
+@api1.route('/texts/<code>')
+@api1.route('/v1/texts/<code>')
 def get_text(code):
     """Text resource entity GET method.
 
@@ -198,7 +209,8 @@ def get_text(code):
     return jsonify(json_obj)
 
 
-@api.route('/characteristicGroups')
+@api1.route('/characteristicGroups')
+@api1.route('/v1/characteristicGroups')
 def get_characteristic_groups():
     """Characteristic Groups  resource collection GET method.
 
@@ -208,7 +220,8 @@ def get_characteristic_groups():
     return 'Characteristic groups'  # TODO
 
 
-@api.route('/characteristicGroups/<code>')
+@api1.route('/characteristicGroups/<code>')
+@api1.route('/v1/characteristicGroups/<code>')
 def get_characteristic_group(code):
     """Characteristic Groups resource entity GET method.
 
@@ -221,7 +234,8 @@ def get_characteristic_group(code):
     return code
 
 
-@api.route('/resources')
+@api1.route('/resources')
+@api1.route('/v1/resources')
 def get_resources():
     """API resource route.
 
@@ -229,12 +243,12 @@ def get_resources():
         json: List of resources.
     """
     resource_endpoints = (
-        ('countries', 'api.get_surveys'),
-        ('surveys', 'api.get_surveys'),
-        ('texts', 'api.get_texts'),
-        ('indicators', 'api.get_indicators'),
-        ('data', 'api.get_data'),
-        ('characteristicGroups', 'api.get_characteristic_groups')
+        ('countries', 'api1.get_surveys'),
+        ('surveys', 'api1.get_surveys'),
+        ('texts', 'api1.get_texts'),
+        ('indicators', 'api1.get_indicators'),
+        ('data', 'api1.get_data'),
+        ('characteristicGroups', 'api1.get_characteristic_groups')
     )
     json_obj = {
         'resources': [
@@ -249,7 +263,8 @@ def get_resources():
 
 
 # TODO: Handle null cases.
-@api.route('/datalab/data')
+@api1.route('/datalab/data')
+@api1.route('/v1/datalab/data')
 def get_datalab_data():
     """Get the correct slice of datalab data."""
     if not request.args:
@@ -268,7 +283,8 @@ def get_datalab_data():
     return jsonify(json_obj)
 
 
-@api.route('/datalab/combos')
+@api1.route('/datalab/combos')
+@api1.route('/v1/datalab/combos')
 def get_datalab_combos():
     """Get datalab combos."""
     # TODO: Account for all combinations of request args or lack thereof.
@@ -285,7 +301,8 @@ def get_datalab_combos():
     return jsonify(DatalabData.get_combos(request.args))
 
 
-@api.route('/datalab/init')
+@api1.route('/datalab/init')
+@api1.route('/v1/datalab/init')
 def get_datalab_init():
     """Get datalab combos."""
     return jsonify(DatalabData.datalab_init())
