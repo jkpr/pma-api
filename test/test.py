@@ -8,15 +8,30 @@ from manage import app
 
 
 class TestRoutes(unittest.TestCase):
+    def setUp(self):
+        """Set up: Put Flask app in test mode."""
+        app.testing = True
+        self.app = app.test_client()
+
+    def test_routes(self, routes):
+        """Smoke test routes to ensure no runtime errors.."""
+        for route in routes:
+            self.app.get(route)
+
+
+class TestAllRoutes(TestRoutes):
     """Test routes."""
 
     ignore_routes = ('/static/<path:filename>',)
     ignore_end_patterns = ('>',)
 
-    def setUp(self):
-        """Set up: Put Flask app in test mode."""
-        app.testing = True
-        self.app = app.test_client()
+    # Init?
+
+    def test_all_routes(self):
+        """Test all routes."""
+        routes = [route.rule for route in app.url_map.iter_rules()
+              if self.valid_route(route.rule)]
+        self.test_routes(routes)
 
     @staticmethod
     def valid_route(route):
@@ -28,17 +43,20 @@ class TestRoutes(unittest.TestCase):
         Returns:
             bool: True if valid, else False.
         """
-        if route in TestRoutes.ignore_routes \
-                or route.endswith(TestRoutes.ignore_end_patterns):
+        if route in TestAllRoutes.ignore_routes \
+                or route.endswith(TestAllRoutes.ignore_end_patterns):
             return False
         return True
 
-    def test_routes(self):
-        """Smoke test routes to ensure no runtime errors.."""
-        routes = [route.rule for route in app.url_map.iter_rules()
-                  if self.valid_route(route.rule)]
-        for route in routes:
-            self.app.get(route)
+
+# class TestDatalabInit(TestRoutes):
+#     """Test route: /datalab/init."""
+#
+#     routes = []
+#
+#     def test_datalab_init(self):
+#         """Smoke test routes to ensure no runtime errors.."""
+#         TestRoutes.test_routes(routes)
 
 
 # class TestDB(unittest.TestCase):  # TODO: Adapt from tutorial.
