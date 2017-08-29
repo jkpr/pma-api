@@ -7,31 +7,29 @@ import unittest
 from manage import app
 
 
-class TestRoutes(unittest.TestCase):
+# Super Classes
+class BaseTestRoutes(unittest.TestCase):
     def setUp(self):
         """Set up: Put Flask app in test mode."""
         app.testing = True
         self.app = app.test_client()
 
-    def test_routes(self, routes):
-        """Smoke test routes to ensure no runtime errors.."""
+    def route_smoke_test(self, routes):
+        """Smoke test routes to ensure no runtime errors."""
         for route in routes:
             self.app.get(route)
 
+    def non_empty_response_value_test(self, routes):
+        """Test to make sure that no values come back which are empty."""
+        pass
 
-class TestAllRoutes(TestRoutes):
+
+# Test Classes
+class TestSmokeTestAllRoutes(BaseTestRoutes):
     """Test routes."""
 
     ignore_routes = ('/static/<path:filename>',)
     ignore_end_patterns = ('>',)
-
-    # Init?
-
-    def test_all_routes(self):
-        """Test all routes."""
-        routes = [route.rule for route in app.url_map.iter_rules()
-              if self.valid_route(route.rule)]
-        self.test_routes(routes)
 
     @staticmethod
     def valid_route(route):
@@ -43,10 +41,30 @@ class TestAllRoutes(TestRoutes):
         Returns:
             bool: True if valid, else False.
         """
-        if route in TestAllRoutes.ignore_routes \
-                or route.endswith(TestAllRoutes.ignore_end_patterns):
+        if route in TestSmokeTestAllRoutes.ignore_routes \
+                or route.endswith(TestSmokeTestAllRoutes.ignore_end_patterns):
             return False
         return True
+
+    def test_all_routes(self):
+        """Test all routes."""
+        routes = [route.rule for route in app.url_map.iter_rules()
+                  if self.valid_route(route.rule)]
+        self.route_smoke_test(routes)
+
+
+class TestNonEmptyResponseValues(BaseTestRoutes):
+    pass
+
+
+class TestValidResponseSchema(BaseTestRoutes):
+
+    schemata = {
+        # '<route>': <expected_format>
+        '': ''
+    }
+
+    pass
 
 
 # class TestDatalabInit(TestRoutes):
