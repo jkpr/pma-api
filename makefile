@@ -87,4 +87,4 @@ ssh_staging:
 staging: ssh_staging
 
 gunicorn:
-	gunicorn pma_api:app
+	gunicorn run:app
