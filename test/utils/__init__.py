@@ -11,9 +11,9 @@ class HiddenPrints:
     """
 
     def __enter__(self):
-        import sys;
+        import sys
         import os
-        self._original_stdout = open(os.devnull, 'w')
+        self._original_stdout = sys.stdout
         sys.stdout = open(os.devnull, 'w')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
