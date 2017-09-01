@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from hashlib import md5
 
-from flask import url_for
+from flask import jsonify, url_for
 from sqlalchemy.exc import IntegrityError
 
 from . import db
@@ -24,6 +24,24 @@ class ApiModel(db.Model):
         self.prune_ignored_fields(kwargs)
         self.empty_to_none(kwargs)
         super().__init__(*args, **kwargs)
+
+    @staticmethod
+    def full_json_collection(model, prequeried=False):
+        """Return collection in full JSON format.
+
+        Args:
+            model (class|list): SqlAlchemy model class if prequeried is False,
+                otherwise a list.
+            prequeried (bool): If model has already been queried.
+
+        returns:
+            json: Jsonified response.
+        """
+        collection = model if prequeried else model.query.all()
+        return jsonify({
+            'resultsSize': len(collection),
+            'results': [record.full_json() for record in collection]
+        })
 
     @staticmethod
     def prune_ignored_fields(kwargs):
@@ -223,6 +241,13 @@ class Indicator(ApiModel):
         self.update_kwargs_english(kwargs, 'definition', 'definition_id')
         self.update_kwargs_english(kwargs, 'label', 'label_id')
         super(Indicator, self).__init__(**kwargs)
+        if kwargs:
+            self.update_kwargs_english(kwargs, 'level1', 'level1_id')
+            self.update_kwargs_english(kwargs, 'level2', 'level2_id')
+            self.update_kwargs_english(kwargs, 'level3', 'level3_id')
+            self.update_kwargs_english(kwargs, 'definition', 'definition_id')
+            self.update_kwargs_english(kwargs, 'label', 'label_id')
+            super(Indicator, self).__init__(**kwargs)
 
     def full_json(self, lang=None, jns=False, endpoint=None):
         """Return dictionary ready to convert to JSON as response.
@@ -268,6 +293,14 @@ class Indicator(ApiModel):
             result = self.namespace(result, 'indicator')
 
         return result
+
+    def api_query_response(self, request_args):
+        """API query response."""
+        collection = Indicator
+        if request_args:
+            collection = collection  # TODO: Filter logic here.
+            return ApiModel.full_json_collection(collection, prequeried=True)
+        return ApiModel.full_json_collection(collection)
 
     def __repr__(self):
         """Return a representation of this object."""
@@ -373,6 +406,17 @@ class CharacteristicGroup(ApiModel):
         }
         return to_return
 
+    def api_query_response(self, request_args):
+        """API query response."""
+        collection = CharacteristicGroup
+        if request_args:
+            collection = collection  # TODO: Filter logic here.
+            return ApiModel.full_json_collection(collection, prequeried=True)
+        return ApiModel.full_json_collection(collection)
+
+    def __repr__(self):
+        return '<CharacteristicGroup "{}">'.format(self.code)
+
 
 class Characteristic(ApiModel):
     """Characteristic model."""
@@ -399,10 +443,11 @@ class Characteristic(ApiModel):
         Raises:
             AttributeError: If valid ID is not found for CharacteristicGroup.
         """
-        self.update_kwargs_english(kwargs, 'label', 'label_id')
-        self.set_kwargs_id(kwargs, 'char_grp_code', 'char_grp_id',
-                           CharacteristicGroup)
-        super(Characteristic, self).__init__(**kwargs)
+        if kwargs:
+            self.update_kwargs_english(kwargs, 'label', 'label_id')
+            self.set_kwargs_id(kwargs, 'char_grp_code', 'char_grp_id',
+                               CharacteristicGroup)
+            super(Characteristic, self).__init__(**kwargs)
 
     def full_json(self, lang=None, jns=False, index=None):
         """Return dictionary ready to convert to JSON as response.
@@ -478,6 +523,17 @@ class Characteristic(ApiModel):
             CharacteristicGroup.none_json(jns=True, index=index)
         result.update(char_grp_json)
         return result
+
+    def api_query_response(self, request_args):
+        """API query response."""
+        collection = Characteristic
+        if request_args:
+            collection = collection  # TODO: Filter logic here.
+            return ApiModel.full_json_collection(collection, prequeried=True)
+        return ApiModel.full_json_collection(collection)
+
+    def __repr__(self):
+        return '<Characteristic "{}">'.format(self.code)
 
 
 class Data(ApiModel):
@@ -579,6 +635,30 @@ class Data(ApiModel):
 
         return result
 
+    @staticmethod
+    def data_refined_query(args):
+        """Data refined query.
+
+        *Args:
+            survey (str): If present, filter by survey entities.
+
+        Returns:
+            dict: Filtered query data.
+        """
+        qset = Data.query
+        if 'survey' in args:
+            qset = qset.filter(Data.survey.has(code=args['survey']))
+        results = qset.all()
+        return results
+
+    def api_query_response(self, request_args):
+        """API query response."""
+        collection = Data
+        if request_args:
+            collection = self.data_refined_query(request_args)
+            return ApiModel.full_json_collection(collection, prequeried=True)
+        return ApiModel.full_json_collection(collection)
+
     def __repr__(self):
         """Return a representation of this object."""
         return '<Data "{}">'.format(self.code)
@@ -605,6 +685,28 @@ class Survey(ApiModel):
     label = db.relationship('EnglishString', foreign_keys=label_id)
     country = db.relationship('Country')
     geography = db.relationship('Geography')
+
+    def __init__(self, **kwargs):
+        """Initialization for instance of model.
+
+        Does a few things: (1) Removes unnecessary fields, (2) Converts API
+        query parameters to model field name equivalents, (3) Inserts new
+        values into the EnglishString translation table if not present, and
+        (4) calls super init.
+
+        Raises:
+            AttributeError: If valid ID is not found for Country.
+        """
+        if kwargs:
+            self.update_kwargs_english(kwargs, 'label', 'label_id')
+            self.update_kwargs_date(kwargs, 'start_date')
+            self.update_kwargs_date(kwargs, 'end_date')
+            self.set_kwargs_id(kwargs, 'country_code', 'country_id', Country,
+                               required=True)
+            self.set_kwargs_id(kwargs, 'geography_code', 'geography_id',
+                               Geography,
+                               required=False)
+            super(Survey, self).__init__(**kwargs)
 
     def url_for(self):
         """Supply URL for resource entity.
@@ -749,8 +851,9 @@ class Country(ApiModel):
         Does a few things: (1) Updates instance based on mapping from API query
         parameter names to model field names, and (2) calls super init.
         """
-        self.update_kwargs_english(kwargs, 'label', 'label_id')
-        super(Country, self).__init__(**kwargs)
+        if kwargs:
+            self.update_kwargs_english(kwargs, 'label', 'label_id')
+            super(Country, self).__init__(**kwargs)
 
     @staticmethod
     def validate_param_types(request_args):
@@ -923,6 +1026,13 @@ class Country(ApiModel):
                     'api.get_text', code=self.label.code, _external=True)
         return json_obj
 
+    @staticmethod
+    def api_query_response(request_args):
+        """API query response."""
+        if True is False:  # Temporary placeholder.
+            return request_args
+        return ApiModel.full_json_collection(Country)
+
     def __repr__(self):
         """Return a representation of this object."""
         return '<Country "{}">'.format(self.code)
@@ -975,6 +1085,14 @@ class Geography(ApiModel):
         if jns:
             result = ApiModel.namespace(result, 'geography')
         return result
+
+    def api_query_response(self, request_args):
+        """API query response."""
+        collection = Geography
+        if request_args:
+            collection = collection  # TODO: Filter logic here.
+            return ApiModel.full_json_collection(collection, prequeried=True)
+        return ApiModel.full_json_collection(collection)
 
     def __repr__(self):
         """Return a representation of this object."""
@@ -1064,6 +1182,15 @@ class EnglishString(ApiModel):
     #     return {'id': self.code,
     #             'string': self.english}
 
+    def api_query_response(self, request_args):
+        """API query response."""
+        collection = EnglishString
+        if request_args:
+            collection = collection  # TODO: Filter logic here.
+            return ApiModel.full_json_collection(collection, prequeried=True)
+        return ApiModel.full_json_collection(collection)
+
+
     def __repr__(self):
         """Return a representation of this object."""
         if len(self.english) < 20:
@@ -1126,6 +1253,14 @@ class Translation(ApiModel):
     #         strings[data['id']] = data['string']
     #
     #     return strings
+
+    def api_query_response(self, request_args):
+        """API query response."""
+        collection = Translation
+        if request_args:
+            collection = collection  # TODO: Filter logic here.
+            return ApiModel.full_json_collection(collection, prequeried=True)
+        return ApiModel.full_json_collection(collection)
 
     def __repr__(self):
         """Return a representation of this object."""
