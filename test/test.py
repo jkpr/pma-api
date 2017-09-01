@@ -5,34 +5,27 @@ import os
 import unittest
 
 from manage import app
+from .utils import doctest_unittest_runner, HiddenPrints
 
 
 # Super Classes
-class BaseTestRoutes(unittest.TestCase):
+class Base(unittest.TestCase):
+    """Base test class."""
+
     def setUp(self):
         """Set up: Put Flask app in test mode."""
         app.testing = True
         self.app = app.test_client()
 
-    def route_smoke_test(self, routes):
-        """Smoke test routes to ensure no runtime errors."""
-        for route in routes:
-            self.app.get(route)
 
-    def non_empty_response_value_test(self, routes):
-        """Test to make sure that no values come back which are empty."""
-        pass
+class BaseRoutes(Base):
+    """Base route test class."""
 
-
-# Test Classes
-class TestSmokeTestAllRoutes(BaseTestRoutes):
-    """Test routes."""
-
-    ignore_routes = ('/static/<path:filename>',)
-    ignore_end_patterns = ('>',)
+    ignore_routes = ('/static/<path:filename>', )
+    entity_route_end_patterns = ('>',)
 
     @staticmethod
-    def valid_route(route):
+    def valid_collection_route(route):
         """Validate route.
 
         Args:
@@ -41,23 +34,43 @@ class TestSmokeTestAllRoutes(BaseTestRoutes):
         Returns:
             bool: True if valid, else False.
         """
-        if route in TestSmokeTestAllRoutes.ignore_routes \
-                or route.endswith(TestSmokeTestAllRoutes.ignore_end_patterns):
+        if route in BaseRoutes.ignore_routes \
+                or route.endswith(BaseRoutes.entity_route_end_patterns):
             return False
         return True
 
-    def test_all_routes(self):
-        """Test all routes."""
-        routes = [route.rule for route in app.url_map.iter_rules()
-                  if self.valid_route(route.rule)]
-        self.route_smoke_test(routes)
+    @staticmethod
+    def collection_routes():
+        """Return all collection routes."""
+        return [route.rule for route in app.url_map.iter_rules()
+                if BaseRoutes.valid_collection_route(route.rule)]
 
 
-class TestNonEmptyResponseValues(BaseTestRoutes):
-    pass
+# Test Classes
+class TestCollectionRoutes(BaseRoutes):
+    """Smoke test all collection routes via HTTP GET."""
+
+    def test_smoke_test_collection_routes(self):
+        """Smoke test routes to ensure no runtime errors."""
+        routes = BaseRoutes.collection_routes()
+
+        with HiddenPrints():
+            for route in routes:
+                self.app.get(route)
 
 
-class TestValidResponseSchema(BaseTestRoutes):
+class TestNonEmptyResponseValues(BaseRoutes):
+    """Test non-empty response values."""
+
+    def non_empty_response_value_test(self, routes):
+        """Test to make sure that no values come back which are empty."""
+        for route in BaseRoutes.collection_routes():
+            data = self.app.get(route)
+            print(data)
+
+
+class TestValidResponseSchema(BaseRoutes):
+    """Test valid response schema."""
 
     schemata = {
         # '<route>': <expected_format>
@@ -105,7 +118,6 @@ class TestValidResponseSchema(BaseTestRoutes):
 
 
 if __name__ == '__main__':
-    from test.utils.doctest_unittest_runner import doctest_unittest_runner
     TEST_DIR = os.path.dirname(os.path.realpath(__file__)) + '/'
     doctest_unittest_runner(test_dir=TEST_DIR, relative_path_to_root='../',
                             package_names=['pma_api', 'test'])
