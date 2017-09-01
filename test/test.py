@@ -66,10 +66,10 @@ class TestNonEmptyResponseValues(BaseRoutes):
         """Test to make sure that no values come back which are empty."""
         for route in BaseRoutes.collection_routes():
             with HiddenPrints():
-                data = self.app.get(route)
-            # print(dir(data))
-            # print(data.content())
-            # '_status_code', '_wrap_response', 'accept_ranges', 'add_etag', 'age', 'allow', 'autocorrect_location_header', 'automatically_set_content_length', 'cache_control', 'calculate_content_length', 'call_on_close', 'charset', 'close', 'content_encoding', 'content_language', 'content_length', 'content_location', 'content_md5', 'content_range', 'content_type', 'data', 'date', 'default_mimetype', 'default_status', 'delete_cookie', 'direct_passthrough', 'expires', 'force_type', 'freeze', 'from_app', 'get_app_iter', 'get_data', 'get_etag', 'get_wsgi_headers', 'get_wsgi_response', 'headers', 'implicit_sequence_conversion', 'is_sequence', 'is_streamed', 'iter_encoded', 'last_modified', 'location', 'make_conditional', 'make_sequence', 'mimetype', 'mimetype_params', 'response', 'retry_after', 'set_cookie', 'set_data', 'set_etag', 'status', 'status_code', 'stream', 'vary', 'www_authenticate']
+                response = self.app.get(route)
+                response_data = response.data
+            # print(type(response_data))  # bytes
+            # print(dict(response_data))
 
 
 class TestValidResponseSchema(BaseRoutes):
