@@ -23,6 +23,11 @@ class BaseRoutes(Base):
 
     ignore_routes = ('/static/<path:filename>', )
     entity_route_end_patterns = ('>',)
+    expected_non_json_response_route_responses = {
+        '/': '',
+        '/ v1 / datalab / combos': '',
+        '/ v1 / characteristicGroups': ''
+    }
 
     @staticmethod
     def valid_collection_route(route):
@@ -46,6 +51,7 @@ class BaseRoutes(Base):
                 if BaseRoutes.valid_collection_route(route.rule)]
 
 
+# TODO: have other lcasses be methods for this.
 # Test Classes
 class TestCollectionRoutes(BaseRoutes):
     """Smoke test all collection routes via HTTP GET."""
@@ -57,6 +63,26 @@ class TestCollectionRoutes(BaseRoutes):
         with HiddenPrints():
             for route in routes:
                 self.app.get(route)
+
+    def test_non_empty_response_values(self):
+        """Test to make sure that no values come back which are empty."""
+        for route in BaseRoutes.collection_routes():
+            with HiddenPrints():
+                response = self.app.get(route)
+                response_data = response.data
+            # print(type(response_data))  # bytes
+            # print(dict(response_data))
+            import json
+            try:
+                response_data = json.loads(response_data)
+
+
+class TestJsonResponses(BaseRoutes):
+    """Test non-json responses."""
+
+    def test_non_json_responses(self):
+        """Test non-json responses."""
+        pass
 
 
 class TestNonEmptyResponseValues(BaseRoutes):
@@ -70,6 +96,13 @@ class TestNonEmptyResponseValues(BaseRoutes):
                 response_data = response.data
             # print(type(response_data))  # bytes
             # print(dict(response_data))
+            import json
+            try:
+                response_data = json.loads(response_data)
+                # print(response_data)
+            except:
+                print('no response')
+                print(route)
 
 
 class TestValidResponseSchema(BaseRoutes):
@@ -83,6 +116,7 @@ class TestValidResponseSchema(BaseRoutes):
     pass
 
 
+# TODO: Testing of possible data types within fields, e.g. null.
 # class TestDatalabInit(TestRoutes):
 #     """Test route: /datalab/init."""
 #
