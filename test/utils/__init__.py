@@ -1,6 +1,7 @@
 """Utils."""
 
 
+# pylint: disable=attribute-defined-outside-init, too-few-public-methods
 class HiddenPrints:
     """Allows code to run in a closure without printing to stdout.
 

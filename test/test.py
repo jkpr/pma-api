@@ -5,9 +5,10 @@ import unittest
 import json
 from os import path
 
+from docunit import doctest_unittest_runner as docunit
+
 from manage import app
 from .utils import HiddenPrints
-from docunit import doctest_unittest_runner as docunit
 
 
 # Super Classes
@@ -21,6 +22,7 @@ class Base(unittest.TestCase):
         self.app = app.test_client()
 
 
+# pylint: disable=dangerous-default-value
 class BaseRoutes(Base):
     """Base route test class."""
 
@@ -35,10 +37,7 @@ class BaseRoutes(Base):
     #     '': ''
     # }
 
-    def __init__(self, *args, **kwargs):
-        """Init."""
-        super(BaseRoutes, self).__init__(*args, **kwargs)
-
+    # pylint: disable=dangerous-default-value
     @staticmethod
     def valid_route(route, conditions=list(), overrides=list()):
         """Validate route.
@@ -46,6 +45,7 @@ class BaseRoutes(Base):
         Args:
             route (str): Route url pattern.
             conditions (list): Conditions.
+            overrides (list): Overrides.
 
         Returns:
             bool: True if valid, else False.
@@ -70,6 +70,7 @@ class BaseRoutes(Base):
 
         return bool(validity)
 
+    # pylint: disable=dangerous-default-value
     @staticmethod
     def routes(conditions=list(), overrides=list()):
         """Get list of routes."""
@@ -86,6 +87,7 @@ class TestCollectionRoutes(BaseRoutes):
     def __init__(self, *args, **kwargs):
         """Init."""
         super(TestCollectionRoutes, self).__init__(*args, **kwargs)
+        self.empty_test = False
         self.collection_routes = BaseRoutes.routes(conditions=['collections'])
         self.json_routes = BaseRoutes.routes(conditions=['collections',
                                                          'json'])
@@ -118,7 +120,7 @@ class TestCollectionRoutes(BaseRoutes):
     def recurse_hash_table(self, hash_table, func, func_params=None):
         """Recurse. hash table."""
         for k, v in hash_table.items():
-            if type(v) == dict:
+            if isinstance(v, dict):
                 self.recurse_hash_table(hash_table=v,
                                         func=func,
                                         func_params=func_params)
@@ -129,22 +131,22 @@ class TestCollectionRoutes(BaseRoutes):
     def assert_non_empty(self, hash_table, k, v):
         """Assert non empty."""
         dat = hash_table['results'] if 'results' in hash_table else None
-        identifier = [k for k, _ in dat.items()][0] if type(
-            dat) is dict and len(dat) != 0 else 'unknown'
+        identifier = [k for k, _ in dat.items()][0] \
+            if isinstance(dat, dict) and dat else 'unknown'
         msg = 'Failed test for non-empty response values at endpoint ' \
               'identified by first result key \'{identifier}\', ' \
               'on key \'{key}\'.'
 
-        if type(v) is not int:
+        if not isinstance(v, int):
             self.assertGreater(len(v), 0, msg.format(
                 identifier=identifier, key=k))
 
-    def _is_empty_value(self, v):
+    def is_empty_value(self, v):
         """Test if value is empty.
 
         Helper function for meta test on test_non_empty_response_values().
         """
-        if type(v) is not int and len(v) == 0:
+        if v and not isinstance(v, int):
             self.empty_test = True
 
     def test_non_empty_response_values(self):
@@ -222,7 +224,7 @@ class TestCollectionRoutes(BaseRoutes):
             bad_dict['test_empty_1'] = []
             bad_dict['test_empty_2'] = ''
             selfie.recurse_hash_table(hash_table=bad_dict,
-                                      func=selfie._is_empty_value,
+                                      func=selfie.is_empty_value,
                                       func_params=['v'])
             selfie.assertTrue(selfie.empty_test)
         meta_tests(self)
