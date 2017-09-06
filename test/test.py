@@ -10,7 +10,6 @@ from .utils import HiddenPrints
 from docunit import doctest_unittest_runner as docunit
 
 
-
 # Super Classes
 class Base(unittest.TestCase):
     """Base test class."""
@@ -54,7 +53,6 @@ class BaseRoutes(Base):
                 if BaseRoutes.valid_collection_route(route.rule)]
 
 
-# TODO: have other lcasses be methods for this.
 # Test Classes
 class TestCollectionRoutes(BaseRoutes):
     """Smoke test all collection routes via HTTP GET."""
@@ -70,32 +68,56 @@ class TestCollectionRoutes(BaseRoutes):
         with HiddenPrints():
             self.routes = BaseRoutes.collection_routes()
             self.responses = self.test_smoke_test()
-            self.json_data = self.test_json_response()
+            self.json_responses = self.test_json_response()
 
     def test_smoke_test(self):
         """Smoke test routes to ensure no runtime errors."""
         return [self.app.get(route)for route in self.routes]
+        # resp.status_code
 
     def test_json_response(self):
         """Valid json response."""
         return [json.loads(response.data) for response in self.responses]
 
-    # def test_non_empty_response_values(self):
-    #     """Test to make sure that no values come back which are empty."""
-    #     for route in BaseRoutes.collection_routes():
-    #         with HiddenPrints():
-    #             response = self.app.get(route)
-    #             response_data = response.data
-    #         # print(type(response_data))  # bytes
-    #         # print(dict(response_data))
-    #         import json
-    #         try:
-    #             response_data = json.loads(response_data)
-    #             # print(response_data)
-    #         except:
-    #             print('no response')
-    #             print(route)
-    #
+    @staticmethod
+    def execute_hash_table_func(func, hash_table, k, v, func_params=None):
+        """Execute hash table function."""
+        if func_params is None:
+            func(v)
+        else:
+            params = {'hash_table': hash_table, 'k': k, 'v': v}
+            for item in func_params:
+                if item not in func_params:
+                    params.pop(item)
+            func(**params)
+
+    # TODO: Recurse through all keys.
+    def recurse_hash_table(self, hash_table, func, func_params=None):
+        """Recurse. hash table."""
+        for k, v in hash_table.items():
+            self.execute_hash_table_func(func, hash_table, k, v, func_params)
+
+    def assert_non_empty(self, hash_table, k, v):
+        """Assert non empty."""
+        dat = hash_table['results'] if 'results' in hash_table else None
+        identifier = [k for k, _ in dat.items()][0] if type(
+            dat) is dict and len(dat) != 0 else 'unknown'
+        msg = 'Failed test for non-empty response values at endpoint ' \
+              'identified by first result key \'{identifier}\', ' \
+              'on key \'{key}\'.'
+
+        if type(v) is not int:
+            self.assertGreater(len(v), 0, msg.format(
+                identifier=identifier, key=k))
+
+    def test_non_empty_response_values(self):
+        """Test to make sure that no values come back which are empty."""
+        for resp in self.responses:
+            data = json.loads(resp.data)
+            self.recurse_hash_table(hash_table=data,
+                                    func=self.assert_non_empty,
+                                    func_params=['hash_table', 'k', 'v'])
+
     # def test_valid_response_schema(self):
     #     """Test valid response schema."""
     #     schemata = TestCollectionRoutes.schemata
