@@ -1,5 +1,4 @@
 """Utils."""
-from .doctest_unittest_runner import doctest_unittest_runner
 
 
 class HiddenPrints:

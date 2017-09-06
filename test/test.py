@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Unit tests."""
-import os
 import unittest
+import json
+from os import path
 
 from manage import app
-from .utils import doctest_unittest_runner, HiddenPrints
+from .utils import HiddenPrints
+from docunit import doctest_unittest_runner as docunit
+
 
 
 # Super Classes
 class Base(unittest.TestCase):
     """Base test class."""
 
-    def setUp(self):
-        """Set up: Put Flask app in test mode."""
+    def __init__(self, *args, **kwargs):
+        """Init."""
+        super(Base, self).__init__(*args, **kwargs)
         app.testing = True
         self.app = app.test_client()
 
@@ -21,13 +25,12 @@ class Base(unittest.TestCase):
 class BaseRoutes(Base):
     """Base route test class."""
 
-    ignore_routes = ('/static/<path:filename>', )
+    ignore_routes = ('/static/<path:filename>',)
     entity_route_end_patterns = ('>',)
-    expected_non_json_response_route_responses = {
-        '/': '',
-        '/ v1 / datalab / combos': '',
-        '/ v1 / characteristicGroups': ''
-    }
+
+    def __init__(self, *args, **kwargs):
+        """Init."""
+        super(BaseRoutes, self).__init__(*args, **kwargs)
 
     @staticmethod
     def valid_collection_route(route):
@@ -56,64 +59,46 @@ class BaseRoutes(Base):
 class TestCollectionRoutes(BaseRoutes):
     """Smoke test all collection routes via HTTP GET."""
 
-    def test_smoke_test_collection_routes(self):
-        """Smoke test routes to ensure no runtime errors."""
-        routes = BaseRoutes.collection_routes()
-
-        with HiddenPrints():
-            for route in routes:
-                self.app.get(route)
-
-    def test_non_empty_response_values(self):
-        """Test to make sure that no values come back which are empty."""
-        for route in BaseRoutes.collection_routes():
-            with HiddenPrints():
-                response = self.app.get(route)
-                response_data = response.data
-            # print(type(response_data))  # bytes
-            # print(dict(response_data))
-            import json
-            try:
-                response_data = json.loads(response_data)
-
-
-class TestJsonResponses(BaseRoutes):
-    """Test non-json responses."""
-
-    def test_non_json_responses(self):
-        """Test non-json responses."""
-        pass
-
-
-class TestNonEmptyResponseValues(BaseRoutes):
-    """Test non-empty response values."""
-
-    def test_non_empty_response_values(self):
-        """Test to make sure that no values come back which are empty."""
-        for route in BaseRoutes.collection_routes():
-            with HiddenPrints():
-                response = self.app.get(route)
-                response_data = response.data
-            # print(type(response_data))  # bytes
-            # print(dict(response_data))
-            import json
-            try:
-                response_data = json.loads(response_data)
-                # print(response_data)
-            except:
-                print('no response')
-                print(route)
-
-
-class TestValidResponseSchema(BaseRoutes):
-    """Test valid response schema."""
-
     schemata = {
         # '<route>': <expected_format>
         '': ''
     }
 
-    pass
+    def __init__(self, *args, **kwargs):
+        """Init."""
+        super(TestCollectionRoutes, self).__init__(*args, **kwargs)
+        with HiddenPrints():
+            self.routes = BaseRoutes.collection_routes()
+            self.responses = self.test_smoke_test()
+            self.json_data = self.test_json_response()
+
+    def test_smoke_test(self):
+        """Smoke test routes to ensure no runtime errors."""
+        return [self.app.get(route)for route in self.routes]
+
+    def test_json_response(self):
+        """Valid json response."""
+        return [json.loads(response.data) for response in self.responses]
+
+    # def test_non_empty_response_values(self):
+    #     """Test to make sure that no values come back which are empty."""
+    #     for route in BaseRoutes.collection_routes():
+    #         with HiddenPrints():
+    #             response = self.app.get(route)
+    #             response_data = response.data
+    #         # print(type(response_data))  # bytes
+    #         # print(dict(response_data))
+    #         import json
+    #         try:
+    #             response_data = json.loads(response_data)
+    #             # print(response_data)
+    #         except:
+    #             print('no response')
+    #             print(route)
+    #
+    # def test_valid_response_schema(self):
+    #     """Test valid response schema."""
+    #     schemata = TestCollectionRoutes.schemata
 
 
 # TODO: Testing of possible data types within fields, e.g. null.
@@ -155,6 +140,6 @@ class TestValidResponseSchema(BaseRoutes):
 
 
 if __name__ == '__main__':
-    TEST_DIR = os.path.dirname(os.path.realpath(__file__)) + '/'
-    doctest_unittest_runner(test_dir=TEST_DIR, relative_path_to_root='../',
-                            package_names=['pma_api', 'test'])
+    TEST_DIR = path.dirname(path.realpath(__file__)) + '/'
+    docunit(test_dir=TEST_DIR, relative_path_to_root='../',
+            package_names=['pma_api', 'test'])
