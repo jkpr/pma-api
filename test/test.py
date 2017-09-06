@@ -26,76 +26,105 @@ class BaseRoutes(Base):
 
     ignore_routes = ('/static/<path:filename>',)
     entity_route_end_patterns = ('>',)
+    non_json_routes = ('/', )
+
+    # TODO: (jef 2017-09-06) Test that route responses adhere to expected
+    # schema. Needs: Time.
+    # schemata = {
+    #     # '<route>': <expected_format>
+    #     '': ''
+    # }
 
     def __init__(self, *args, **kwargs):
         """Init."""
         super(BaseRoutes, self).__init__(*args, **kwargs)
 
     @staticmethod
-    def valid_collection_route(route):
+    def valid_route(route, conditions=list(), overrides=list()):
         """Validate route.
 
         Args:
             route (str): Route url pattern.
+            conditions (list): Conditions.
 
         Returns:
             bool: True if valid, else False.
         """
-        if route in BaseRoutes.ignore_routes \
-                or route.endswith(BaseRoutes.entity_route_end_patterns):
-            return False
-        return True
+        validity = True
+        validity_conditions = {
+            'collections': lambda: False if route.endswith(
+                BaseRoutes.entity_route_end_patterns) else True,
+            'json':
+                lambda: False if route in BaseRoutes.non_json_routes else True,
+            'ignore_routes':
+                lambda: False if route in BaseRoutes.ignore_routes else True
+        }
+        if 'ignore_routes' not in overrides:
+            conditions.append('ignore_routes')
+
+        for condition, check in validity_conditions.items():
+            if condition in conditions:
+                validity *= check()
+                if validity is False:
+                    break
+
+        return bool(validity)
 
     @staticmethod
-    def collection_routes():
-        """Return all collection routes."""
+    def routes(conditions=list(), overrides=list()):
+        """Get list of routes."""
         return [route.rule for route in app.url_map.iter_rules()
-                if BaseRoutes.valid_collection_route(route.rule)]
+                if BaseRoutes.valid_route(route=route.rule,
+                                          conditions=conditions,
+                                          overrides=overrides)]
 
 
 # Test Classes
 class TestCollectionRoutes(BaseRoutes):
     """Smoke test all collection routes via HTTP GET."""
 
-    schemata = {
-        # '<route>': <expected_format>
-        '': ''
-    }
-
     def __init__(self, *args, **kwargs):
         """Init."""
         super(TestCollectionRoutes, self).__init__(*args, **kwargs)
-        with HiddenPrints():
-            self.routes = BaseRoutes.collection_routes()
-            self.responses = self.test_smoke_test()
-            self.json_responses = self.test_json_response()
+        self.collection_routes = BaseRoutes.routes(conditions=['collections'])
+        self.json_routes = BaseRoutes.routes(conditions=['collections',
+                                                         'json'])
+        self.json_responses = self.test_json_response()
 
     def test_smoke_test(self):
         """Smoke test routes to ensure no runtime errors."""
-        return [self.app.get(route)for route in self.routes]
-        # resp.status_code
+        with HiddenPrints():
+            return [self.app.get(route) for route in self.collection_routes]
 
     def test_json_response(self):
         """Valid json response."""
-        return [json.loads(response.data) for response in self.responses]
+        with HiddenPrints():
+            return [json.loads(self.app.get(route).data)
+                    for route in self.json_routes]
 
     @staticmethod
-    def execute_hash_table_func(func, hash_table, k, v, func_params=None):
+    def execute_hash_table_func(hash_table, k, v, func, func_params=None):
         """Execute hash table function."""
         if func_params is None:
             func(v)
         else:
             params = {'hash_table': hash_table, 'k': k, 'v': v}
-            for item in func_params:
+            params_list = [k for k in params]
+            for item in params_list:
                 if item not in func_params:
                     params.pop(item)
             func(**params)
 
-    # TODO: Recurse through all keys.
     def recurse_hash_table(self, hash_table, func, func_params=None):
         """Recurse. hash table."""
         for k, v in hash_table.items():
-            self.execute_hash_table_func(func, hash_table, k, v, func_params)
+            if type(v) == dict:
+                self.recurse_hash_table(hash_table=v,
+                                        func=func,
+                                        func_params=func_params)
+            else:
+                self.execute_hash_table_func(hash_table=hash_table, func=func,
+                                             func_params=func_params, k=k, v=v)
 
     def assert_non_empty(self, hash_table, k, v):
         """Assert non empty."""
@@ -110,20 +139,102 @@ class TestCollectionRoutes(BaseRoutes):
             self.assertGreater(len(v), 0, msg.format(
                 identifier=identifier, key=k))
 
+    def _is_empty_value(self, v):
+        """Test if value is empty.
+
+        Helper function for meta test on test_non_empty_response_values().
+        """
+        if type(v) is not int and len(v) == 0:
+            self.empty_test = True
+
     def test_non_empty_response_values(self):
-        """Test to make sure that no values come back which are empty."""
-        for resp in self.responses:
+        """Test to make sure that no values come back which are empty.
+
+        Catches empty values for major keys in response schema.
+
+        Does not catch empty values for individual items, such as an empty
+        field value for a given data point.
+
+        TODO: (jef 2017-09-06) Optionally add test to catch empty field values
+        for individual items based on whether or not the field is nullable.
+        Needs: Time.
+
+        Example:
+                "metadata": {
+                    "dataset_metadata": [],  <-- Catches Empty
+                    "version": ""  <-- Catches Empty
+                },
+                "results": [
+                    {
+                        "characteristic.id": "none",
+                        "characteristicGroup.id": "none",
+                        "indicator.id": "",  <-- Doesn't catch.
+                        "precision": 1,
+                        "survey.id": "GH2013PMA",
+                        "value": 15.4
+                    }
+                ]
+            }
+
+
+        """
+        for route in self.json_routes:
+            with HiddenPrints():
+                resp = self.app.get(route)
             data = json.loads(resp.data)
             self.recurse_hash_table(hash_table=data,
                                     func=self.assert_non_empty,
                                     func_params=['hash_table', 'k', 'v'])
 
+        def meta_tests(selfie):
+            """Meta tests using static values.
+
+            Meta tests to ensure dynamic test test_non_empty_response_values()
+            is working as intended.
+            """
+            from copy import copy
+            good_dict = {
+                "metadata": {
+                    "dataset_metadata": [
+                        {"created_on": "Thu, 31 Aug 2017 15:06:12 GMT"},
+                        {"created_on": "Thu, 31 Aug 2017 15:06:12 GMT"}
+                    ],
+                    "version": "0.1.2"
+                },
+                "resultSize": 1,
+                "results": [
+                    {
+                        "characteristic.id": "none",
+                        "characteristicGroup.id": "none",
+                        "indicator.id": "mcpr_aw",
+                        "precision": 1,
+                        "survey.id": "GH2013PMA",
+                        "value": 15.4
+                    }
+                ]
+            }
+            selfie.recurse_hash_table(hash_table=good_dict,
+                                      func=selfie.assert_non_empty,
+                                      func_params=['hash_table', 'k', 'v'])
+
+            selfie.empty_test = False
+            bad_dict = copy(good_dict)
+            bad_dict['test_empty_1'] = []
+            bad_dict['test_empty_2'] = ''
+            selfie.recurse_hash_table(hash_table=bad_dict,
+                                      func=selfie._is_empty_value,
+                                      func_params=['v'])
+            selfie.assertTrue(selfie.empty_test)
+        meta_tests(self)
+
+    # TODO: (jef 2017-09-06) Test that route responses adhere to expected
+    # schema. Needs: Time.
     # def test_valid_response_schema(self):
     #     """Test valid response schema."""
     #     schemata = TestCollectionRoutes.schemata
 
-
-# TODO: Testing of possible data types within fields, e.g. null.
+# TODO: (jef 2017-09-06) Testing of possible data types within fields,
+# e.g. null. Needs: Time
 # class TestDatalabInit(TestRoutes):
 #     """Test route: /datalab/init."""
 #
@@ -134,10 +245,10 @@ class TestCollectionRoutes(BaseRoutes):
 #         TestRoutes.test_routes(routes)
 
 
-# class TestDB(unittest.TestCase):  # TODO: Adapt from tutorial.
+# class TestDB(unittest.TestCase):
 #     """Test database functionality.
 #
-#     Tutorial: http://flask.pocoo.org/docs/0.12/testing/
+#     Link to Flask tutorial: http://flask.pocoo.org/docs/0.12/testing/
 #     """
 #
 #     def setUp(self):
