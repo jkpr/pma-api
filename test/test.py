@@ -20,6 +20,9 @@ class Base(unittest.TestCase):
         super(Base, self).__init__(*args, **kwargs)
         app.testing = True
         self.app = app.test_client()
+        # TODO: Try importing from PMA-API init instead of from manage.
+        # And add a config to silence sqlalchemy output. leave sqlalchemy
+        # echo out.
 
 
 # pylint: disable=dangerous-default-value
