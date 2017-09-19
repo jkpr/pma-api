@@ -45,7 +45,13 @@ class ApiModel(db.Model):
             source_key (str): The source date string.
         """
         string_date = kwargs[source_key]
-        this_date = datetime.strptime(string_date, '%Y-%m-%d')
+        get_date = lambda x: datetime.strptime(string_date, x)
+        try:
+            this_date = get_date('%Y-%m')
+        except ValueError:
+            # this_date = get_date('%Y-%m-%d')
+            raise ValueError('Error parsing date. Please use format \'%Y-%m\''
+                             ', e.g. 2017-12.')
         kwargs[source_key] = this_date
 
     @staticmethod
