@@ -47,10 +47,10 @@ class ApiModel(db.Model):
         string_date = kwargs[source_key]
         get_date = lambda x: datetime.strptime(string_date, x)
         try:
-            this_date = get_date('%Y-%m')
+            this_date = get_date('%m-%Y')
         except ValueError:
             # this_date = get_date('%Y-%m-%d')
-            raise ValueError('Error parsing date. Please use format \'%Y-%m\''
+            raise ValueError('Error parsing date. Please use format \'%m-%Y\''
                              ', e.g. 2017-12.')
         kwargs[source_key] = this_date
 

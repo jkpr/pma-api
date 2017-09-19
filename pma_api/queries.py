@@ -179,7 +179,7 @@ class DatalabData:
                 'precision': item[0].precision,
                 'survey.id': item[1].code,
                 # 'survey.date': item[1].start_date.strftime('%Y-%m-%d'),
-                'survey.date': item[1].start_date.strftime('%Y-%m'),
+                'survey.date': item[1].start_date.strftime('%m-%Y'),
                 'survey.label.id': item[1].label.code,
                 'indicator.id': item[2],
                 'characteristicGroup.id': item[3],
