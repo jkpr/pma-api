@@ -487,14 +487,18 @@ class DatalabData:
         for char_grp in results:
             for cat in chargrp_categories:
                 if char_grp.category.code == cat['label.id']:
-                    cat['characteristicGroups'].append(char_grp.
-                                                       datalab_init_json())
+                    cat['characteristicGroups'].append(char_grp.datalab_init_json())
                     break
             else:
                 chargrp_categories.append({
                     'label.id': char_grp.category.code,
                     'characteristicGroups': [char_grp.datalab_init_json()]
                 })
+
+        for category in chargrp_categories:
+            category['characteristicGroups'] = \
+                sorted(category['characteristicGroups'],
+                       key=itemgetter('order'))
 
         return chargrp_categories
 
