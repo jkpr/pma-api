@@ -8,6 +8,7 @@ from os import path
 from manage import app
 from .utils import HiddenPrints
 from docunit import doctest_unittest_runner as docunit
+from json.decoder import JSONDecodeError
 
 
 # Super Classes
@@ -77,7 +78,13 @@ class TestCollectionRoutes(BaseRoutes):
 
     def test_json_response(self):
         """Valid json response."""
-        return [json.loads(response.data) for response in self.responses]
+        try:
+            json_responses = [json.loads(response.data) for response in
+                              self.responses]
+        except:
+            json_responses = []
+        self.assertEqual(len(self.responses), len(json_responses))
+        return json_responses
 
     @staticmethod
     def execute_hash_table_func(func, hash_table, k, v, func_params=None):
