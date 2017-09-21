@@ -1,5 +1,6 @@
 v0.1.6b, 22 September 2017
  * Data updates.
+ * Sorting of countries alphabetically in datalab/init.
 
 v0.1.6a, 20 September 2017
  * Improved test: test_json_response
