@@ -7,9 +7,8 @@ from flask_script import Manager, Shell
 import xlrd
 
 from pma_api import create_app, db
-from pma_api.models import (Characteristic, CharacteristicGroup, Country,
-        Data, EnglishString, Geography, Indicator, SourceData, Survey,
-        Translation)
+from pma_api.models import Characteristic, CharacteristicGroup, Country, Data,\
+    EnglishString, Geography, Indicator, SourceData, Survey, Translation
 
 
 app = create_app(os.getenv('FLASK_CONFIG', 'default'))
@@ -94,12 +93,18 @@ def init_from_sheet(ws, model):
     header = None
     for i, row in enumerate(ws.get_rows()):
         row = [r.value for r in row]
-        if i == 0:
-            header = row
-        else:
-            row_dict = {k: v for k, v in zip(header, row)}
-            record = model(**row_dict)
-            db.session.add(record)
+
+        try:
+            if i == 0:
+                header = row
+            else:
+                row_dict = {k: v for k, v in zip(header, row)}
+                record = model(**row_dict)
+                db.session.add(record)
+        except KeyError:
+            msg = "Issue occurred.\nModel: {}\nWorksheet: {}\nRow Data: {}"\
+                .format(model, ws, row)
+            raise KeyError(msg)
     db.session.commit()
 
 
@@ -112,7 +117,7 @@ def init_from_workbook(wb, queue):
     """
     with xlrd.open_workbook(wb) as book:
         for sheetname, model in queue:
-            if sheetname == 'data': # actually done last
+            if sheetname == 'data':  # actually done last
                 for ws in book.sheets():
                     if ws.name.startswith('data'):
                         init_from_sheet(ws, model)
