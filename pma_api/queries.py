@@ -581,9 +581,14 @@ class DatalabData:
 
             this_country_obj = {
                 'label.id': country.label.code,
+                'label': country.label.english,
                 'geographies': geography_list
             }
             survey_country_list.append(this_country_obj)
+
+        # - Sort countries alphabetically.
+        survey_country_list = sorted(survey_country_list,
+                                     key=itemgetter('label'))
 
         return survey_country_list
 
