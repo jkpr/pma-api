@@ -468,14 +468,27 @@ class DatalabData:
         indicator_categories = []
         for ind in results:
             for cat in indicator_categories:
-                if ind.level2.code == cat['label.id']:
+                if ind.level1.code == cat['label.id']:
                     cat['indicators'].append(ind.datalab_init_json())
                     break
             else:
                 indicator_categories.append({
-                    'label.id': ind.level2.code,
+                    'label.id': ind.level1.code,
+                    'label': ind.level1.english,
                     'indicators': [ind.datalab_init_json()]
                 })
+
+        # - Sort indicators within a given indicator category.
+        for ind in indicator_categories:
+            ind['indicators'] = \
+                sorted(ind['indicators'], key=itemgetter('order'))
+            # - Assign an implicit 'order' to indicator categories.
+            ind['order'] = ind['indicators'][0]['order']
+
+        # - Sort indicator cateogories.
+        indicator_categories = sorted(indicator_categories,
+                                      key=itemgetter('order'))
+
         return indicator_categories
 
     @staticmethod
