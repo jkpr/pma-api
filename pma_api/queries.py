@@ -1,5 +1,6 @@
 """Queries."""
 from collections import ChainMap
+from operator import itemgetter
 
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -505,6 +506,7 @@ class DatalabData:
         results = joined.distinct().all()
         results = [record.datalab_init_json() if record is not None else "none"
                    for record in results]
+        results = sorted(results, key=itemgetter('order'))
         return results
 
     @staticmethod
