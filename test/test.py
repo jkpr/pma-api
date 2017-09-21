@@ -82,7 +82,8 @@ class TestCollectionRoutes(BaseRoutes):
                               self.responses]
         except:
             json_responses = []
-        self.assertEqual(len(self.responses), len(json_responses))
+        msg = "Not all responses had valid JSON."
+        self.assertEqual(len(self.responses), len(json_responses), msg=msg)
         return json_responses
 
     @staticmethod
