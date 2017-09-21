@@ -1,5 +1,6 @@
 """Queries."""
 from collections import ChainMap
+from operator import itemgetter
 
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -95,7 +96,7 @@ class DatalabData:
         results = []
         next_series = {}
         for obj in sorted_data:
-            if obj['survey.label.id'] != curr_survey:
+            if obj['survey.id'] != curr_survey:
                 if curr_survey is not None:
                     results.append(next_series)
                 next_series = {
@@ -115,7 +116,7 @@ class DatalabData:
                         }
                     ]
                 }
-                curr_survey = next_series['survey.label.id']
+                curr_survey = next_series['survey.id']
             else:
                 next_series['values'].append({
                     'characteristic.label.id':
@@ -178,7 +179,8 @@ class DatalabData:
                 'value': item[0].value,
                 'precision': item[0].precision,
                 'survey.id': item[1].code,
-                'survey.date': item[1].start_date.strftime('%Y-%m-%d'),
+                # 'survey.date': item[1].start_date.strftime('%Y-%m-%d'),
+                'survey.date': item[1].start_date.strftime('%m-%Y'),
                 'survey.label.id': item[1].label.code,
                 'indicator.id': item[2],
                 'characteristicGroup.id': item[3],
@@ -465,14 +467,27 @@ class DatalabData:
         indicator_categories = []
         for ind in results:
             for cat in indicator_categories:
-                if ind.level2.code == cat['label.id']:
+                if ind.level1.code == cat['label.id']:
                     cat['indicators'].append(ind.datalab_init_json())
                     break
             else:
                 indicator_categories.append({
-                    'label.id': ind.level2.code,
+                    'label.id': ind.level1.code,
+                    'label': ind.level1.english,
                     'indicators': [ind.datalab_init_json()]
                 })
+
+        # - Sort indicators within a given indicator category.
+        for ind in indicator_categories:
+            ind['indicators'] = \
+                sorted(ind['indicators'], key=itemgetter('order'))
+            # - Assign an implicit 'order' to indicator categories.
+            ind['order'] = ind['indicators'][0]['order']
+
+        # - Sort indicator cateogories.
+        indicator_categories = sorted(indicator_categories,
+                                      key=itemgetter('order'))
+
         return indicator_categories
 
     @staticmethod
