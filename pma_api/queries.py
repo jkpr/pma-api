@@ -489,7 +489,6 @@ class DatalabData:
 
         return indicator_categories
 
-
     @staticmethod
     def init_char_grp():
         """Datalab init."""
