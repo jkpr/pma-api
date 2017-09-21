@@ -308,7 +308,8 @@ class Indicator(ApiModel):
             'id': self.code,
             'label.id': self.label.code,
             'definition.id': self.definition.code,
-            'order': self.order
+            'order': self.order,
+            'type': self.type
         }
         return to_return
 
