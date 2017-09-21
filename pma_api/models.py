@@ -397,6 +397,7 @@ class CharacteristicGroup(ApiModel):
             'id': self.code,
             'label.id': self.label.code,
             'definition.id': self.definition.code,
+            'order': self.order
         }
         return to_return
 
