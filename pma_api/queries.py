@@ -1,5 +1,6 @@
 """Queries."""
 from collections import ChainMap
+from operator import itemgetter
 
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -475,6 +476,8 @@ class DatalabData:
                     'indicators': [ind.datalab_init_json()]
                 })
         return indicator_categories
+
+    # something = sorted(list(), key=itemgetter('item'))
 
     @staticmethod
     def init_char_grp():
