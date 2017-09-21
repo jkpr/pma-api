@@ -475,9 +475,9 @@ class DatalabData:
                     'label.id': ind.level2.code,
                     'indicators': [ind.datalab_init_json()]
                 })
+
         return indicator_categories
 
-    # something = sorted(list(), key=itemgetter('item'))
 
     @staticmethod
     def init_char_grp():
