@@ -476,6 +476,17 @@ class DatalabData:
                     'indicators': [ind.datalab_init_json()]
                 })
 
+        # - Sort indicators within a given indicator category.
+        for ind in indicator_categories:
+            ind['indicators'] = \
+                sorted(ind['indicators'], key=itemgetter('order'))
+            # - Assign an implicit 'order' to indicator categories.
+            ind['order'] = ind['indicators'][0]['order']
+
+        # - Sort indicator cateogories.
+        indicator_categories = sorted(indicator_categories,
+                                      key=itemgetter('order'))
+
         return indicator_categories
 
 
