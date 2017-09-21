@@ -77,7 +77,13 @@ class TestCollectionRoutes(BaseRoutes):
 
     def test_json_response(self):
         """Valid json response."""
-        return [json.loads(response.data) for response in self.responses]
+        try:
+            json_responses = [json.loads(response.data) for response in
+                              self.responses]
+        except:
+            json_responses = []
+        self.assertEqual(len(self.responses), len(json_responses))
+        return json_responses
 
     @staticmethod
     def execute_hash_table_func(func, hash_table, k, v, func_params=None):
