@@ -103,8 +103,9 @@ def init_from_sheet(ws, model):
                 db.session.add(record)
         except KeyError:
             msg = "Issue occurred.\nModel: {}\nWorksheet: {}\nRow Data: {}"\
-                .format(model, ws, row)
-            raise KeyError(msg)
+                .format(model, ws.name, row)
+            print(msg)
+            raise KeyError
     db.session.commit()
 
 
