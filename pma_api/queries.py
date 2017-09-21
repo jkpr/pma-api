@@ -551,15 +551,25 @@ class DatalabData:
                     'label': geo.subheading.english,
                     'label.id': geo.subheading.code,
                     'country.code': geo.code[:2].upper(),
-                    # 'country.label': Country.query.filter_by(code=geo.subheading.code).first().label_id,
                     'surveys': survey_list
                 }
                 geography_list.append(this_geo_obj)
+
+                # If 'National' is a listed geography, put it at the start of
+                # the list.
+                for i in range(len(geography_list)):
+                    if geography_list[i]['label'] == 'National':
+                        geography_list.insert(0, geography_list.pop(i))
+                        break
+
             this_country_obj = {
                 'label.id': country.label.code,
                 'geographies': geography_list
             }
             survey_country_list.append(this_country_obj)
+
+        # TODO: Sort by round by creating key "round" which is a regex match
+        # and substring. e.g. PMA2016_NGR3_Kaduna -> _NGR3_ -> 3
 
         return survey_country_list
 
