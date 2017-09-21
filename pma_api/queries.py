@@ -473,6 +473,7 @@ class DatalabData:
             else:
                 indicator_categories.append({
                     'label.id': ind.level2.code,
+                    'label': ind.level2.english,
                     'indicators': [ind.datalab_init_json()]
                 })
 
