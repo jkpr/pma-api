@@ -548,6 +548,8 @@ class DatalabData:
                 surveys = country_geo_map[country_geo_key]
                 survey_list = [s.datalab_init_json() for s in surveys]
                 this_geo_obj = {
+                    'label': EnglishString.query.filter_by(
+                        code=geo.subheading.code).first().english,
                     'label.id': geo.subheading.code,
                     'surveys': survey_list
                 }
