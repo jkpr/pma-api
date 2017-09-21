@@ -508,8 +508,8 @@ class DatalabData:
             # characteristics in all characteristic groups.
             category['order'] = category['characteristicGroups'][0]['order']
 
+        # - Sort characteristic groups.
         chargrp_categories = sorted(chargrp_categories, key=itemgetter('order'))
-
 
         return chargrp_categories
 
