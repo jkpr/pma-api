@@ -603,6 +603,10 @@ class DatalabData:
                     the_geo['surveys'] = \
                         sorted(the_geo['surveys'], key=itemgetter('round'))
 
+                # - Sort list of geographies alphabetically.
+                geography_list = sorted(geography_list,
+                                        key=itemgetter('label'))
+
                 # - If 'National' is a listed geography, put it at the start of
                 # the list.
                 for i in range(len(geography_list)):
