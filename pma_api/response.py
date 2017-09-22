@@ -66,14 +66,18 @@ class QuerySetApiResult(ApiResult):
     @staticmethod
     def csv_response(record_list):
         """CSV Response."""
-        # TODO (jkp 2017-09-05) Handle error (empty record_list)
-        string_io = StringIO()
-        header = record_list[0].keys()
-        writer = DictWriter(f=string_io, fieldnames=header)
-        writer.writeheader()
-        writer.writerows((item for item in record_list))
-        result = string_io.getvalue()
-        return Response(result, mimetype='text/csv')
+        # TODO (jef 2017-09-21) Improve error returned.
+        if record_list:
+            string_io = StringIO()
+            header = record_list[0].keys()
+            writer = DictWriter(f=string_io, fieldnames=header)
+            writer.writeheader()
+            writer.writerows((item for item in record_list))
+            result = string_io.getvalue()
+
+            return Response(result, mimetype='text/csv')
+        else:
+            return Response("Error: No data.", mimetype='text/json')
 
     @staticmethod
     def json_response(record_list, extra_metadata, **kwargs):

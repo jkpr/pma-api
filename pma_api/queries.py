@@ -87,7 +87,8 @@ class DatalabData:
                     'value': obj.pop('value'),
                     'precision': obj.pop('precision')
                 })
-        results.append(next_series)
+        if next_series:
+            results.append(next_series)
         return results
 
     @staticmethod
@@ -126,7 +127,8 @@ class DatalabData:
                     'value': obj.pop('value'),
                     'precision': obj.pop('precision')
                 })
-        results.append(next_series)
+        if next_series:
+            results.append(next_series)
         return results
 
     @staticmethod
