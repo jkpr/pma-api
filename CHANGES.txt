@@ -5,6 +5,7 @@ v0.1.6b, 22 September 2017
  purpose of being able to tell datalab to allow pie graph charting when
  indicator.type is 'distribution'.
  * Added error handling for empty CSV.
+ * Added alphabetical sorting for geographies in datalab/init.
 
 v0.1.6a, 20 September 2017
  * Improved test: test_json_response
