@@ -1,4 +1,7 @@
-v0.1.6b, 22 September 2017
+v0.1.6c, 22 September 2017
+ * Data updates.
+
+v0.1.6b, 21 September 2017
  * Data updates.
  * Sorting of countries alphabetically in datalab/init.
  * Added key 'type' to 'datalab/init/indicatorCategories/<indicator>' for the
