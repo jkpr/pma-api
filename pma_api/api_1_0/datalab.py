@@ -1,5 +1,5 @@
 """Routes related to the datalab."""
-from flask import request, jsonify
+from flask import request
 
 from . import api
 from ..response import ApiResult, QuerySetApiResult
@@ -46,6 +46,6 @@ def get_datalab_init():
     """Get datalab combos."""
     cached = Cache.query.filter_by(endpoint='v1/datalab/init').first()
     if cached:
-        return jsonify(cached.to_json())
+        return cached.to_json()
     json_obj = DatalabData.datalab_init()
     return ApiResult(json_obj)
