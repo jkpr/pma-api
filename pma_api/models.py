@@ -221,7 +221,7 @@ class Cache(db.Model):
             dict: API response ready to be JSONified.
         """
         # return self.json_data
-        return json.loads(self.json_data)
+        return json.loads(str(self.json_data))
 
 
 class Indicator(ApiModel):
