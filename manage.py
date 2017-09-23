@@ -9,7 +9,7 @@ import xlrd
 
 from pma_api import create_app, db
 from pma_api.models import Characteristic, CharacteristicGroup, Country, Data,\
-    EnglishString, Geography, Indicator, SourceData, Survey, Translation
+    EnglishString, Geography, Indicator, SourceData, Survey, Translation, Cache
 
 
 app = create_app(os.getenv('FLASK_CONFIG', 'default'))
@@ -59,7 +59,7 @@ def make_shell_context():
     """
     return dict(app=app, db=db, Country=Country, EnglishString=EnglishString,
                 Translation=Translation, Survey=Survey, Indicator=Indicator,
-                Data=Data, Characteristic=Characteristic,
+                Data=Data, Characteristic=Characteristic, Cache=Cache,
                 CharacteristicGroup=CharacteristicGroup, SourceData=SourceData)
 
 
@@ -134,7 +134,6 @@ def create_wb_metadata(wb_path):
     db.session.commit()
 
 
-# TODO: remove --overwrite
 @manager.option('-o', '--overwrite', dest='overwrite', action='store_true',
                 help='Drop tables first?', default=False)
 def initdb(overwrite):
@@ -165,8 +164,9 @@ def cache_response(versionless_endpoint, api_version):
     cache_response_client.config['SQLALCHEMY_ECHO'] = False
     getter = cache_response_client.test_client()
     json_response = getter.get(endpoint).data
-    # db.session.add(record)
-    # db.session.commit()
+    record = Cache(endpoint, json_response)
+    db.session.add(record)
+    db.session.commit()
 
 
 @manager.option('-e', '--endpoints', dest='endpoints',

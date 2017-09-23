@@ -2,6 +2,7 @@
 # pylint: disable=too-many-lines
 """Model definitions."""
 import os
+import json
 from datetime import datetime
 from hashlib import md5
 
@@ -195,6 +196,30 @@ class SourceData(db.Model):
             'createdOn': self.created_on
         }
         return result
+
+
+class Cache(db.Model):
+    """Cache for API responses."""
+
+    __tablename__ = 'cache'
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    endpoint = db.Column(db.String, nullable=False, unique=True, index=True)
+    json_data = db.Column(db.String, nullable=False)
+    md5_checksum = db.Column(db.String)
+
+    def __init__(self, endpoint, json_data):
+        """Metadata init."""
+        self.endpoint = endpoint
+        self.json_data = json_data
+        self.md5_checksum = md5(json_data)
+
+    def to_json(self):
+        """Return dictionary ready to convert to JSON as response.
+
+        Returns:
+            dict: API response ready to be JSONified.
+        """
+        return json.loads(self.json_data)
 
 
 class Indicator(ApiModel):
