@@ -136,17 +136,21 @@ def create_wb_metadata(wb_path):
 
 @manager.option('-o', '--overwrite', dest='overwrite', action='store_true',
                 help='Drop tables first?', default=False)
-def initdb(overwrite):
+@manager.option('-d', '--init_data', dest='init_data', action='store_true',
+                help='Initialize with data?', default=False)
+def initdb(overwrite, init_data):
     """Create the database.
 
     Args:
         overwrite (bool): Overwrite database if True, else update.
+        init_data (bool): Initialize database with data if True, else just
+            create the model.
     """
     with app.app_context():
         if overwrite:
             db.drop_all()
         db.create_all()
-        if overwrite:
+        if overwrite or init_data:
             init_from_workbook(wb=SRC_DATA, queue=ORDERED_MODEL_MAP)
             init_from_workbook(wb=UI_DATA, queue=UI_ORDERED_MODEL_MAP)
 
