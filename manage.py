@@ -159,15 +159,12 @@ def initdb(overwrite=False, init_data=False, no_cache=False):
                 cache_responses()
 
 
-def cache_response(versionless_endpoint, api_version):
+def cache_response(endpoint):
     """Cache response.
 
     Args:
-        versionless_endpoint (str): API endpoint to cache.
-        api_version (str): API version to use, without the 'v' prefix.
+        endpoint (str): Versioned API endpoint to cache.
     """
-    version = 'v' + str(api_version)
-    endpoint = version + '/' + versionless_endpoint
     cache_response_client = copy(app)
     cache_response_client.config['SQLALCHEMY_ECHO'] = False
     getter = cache_response_client.test_client()
@@ -194,9 +191,22 @@ def cache_responses(endpoints=CACHE_DEFAULT_ENDPOINTS,
             prefix, e.g. '1', '2', etc.
 
     """
+    # - Get list of versioned endpoints.
+    endpoints_list = []
     for version in api_versions:
-        for endpoint in endpoints:
-            cache_response(endpoint, version)
+        for versionless_endpoint in endpoints:
+            version = 'v' + str(version)
+            endpoint = version + '/' + versionless_endpoint
+            endpoints_list.append(endpoint)
+
+    # - Delete any cached endpoint data before new caching.
+    Cache.query.filter(Cache.endpoint.in_(endpoints_list))\
+        .delete(synchronize_session=False)
+    db.session.commit()
+
+    # - Cache endpoints.
+    for endpoint in endpoints_list:
+        cache_response(endpoint)
 
 
 manager.add_command('shell', Shell(make_context=make_shell_context))
