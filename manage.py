@@ -138,7 +138,9 @@ def create_wb_metadata(wb_path):
                 help='Drop tables first?', default=False)
 @manager.option('-d', '--init_data', dest='init_data', action='store_true',
                 help='Initialize with data?', default=False)
-def initdb(overwrite, init_data):
+@manager.option('-n', '--no_cache', dest='no_cache', action='store_true',
+                help='Do not cache responses?', default=False)
+def initdb(overwrite=False, init_data=False, no_cache=False):
     """Create the database.
 
     Args:
@@ -153,6 +155,8 @@ def initdb(overwrite, init_data):
         if overwrite or init_data:
             init_from_workbook(wb=SRC_DATA, queue=ORDERED_MODEL_MAP)
             init_from_workbook(wb=UI_DATA, queue=UI_ORDERED_MODEL_MAP)
+            if not no_cache:
+                cache_responses()
 
 
 def cache_response(versionless_endpoint, api_version):
@@ -179,7 +183,8 @@ def cache_response(versionless_endpoint, api_version):
 @manager.option('-v', '--api_versions', dest='api_versions',
                 help='API versions to cache for endpoints.',
                 default=CACHE_DEFAULT_API_VERSIONS)
-def cache_responses(endpoints, api_versions):
+def cache_responses(endpoints=CACHE_DEFAULT_ENDPOINTS,
+                    api_versions=CACHE_DEFAULT_API_VERSIONS):
     """Cache responses as JSON strings in the 'cache' table of DB.
 
     Args:
