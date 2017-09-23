@@ -1,2 +1,2 @@
 """PMA API version."""
-__version__ = '0.1.6c'
+__version__ = '0.1.6d'

@@ -1,3 +1,6 @@
+v0.1.6d, 23 September 2017
+ * Added response caching and initialized with datalab/init.
+
 v0.1.6c, 22 September 2017
  * Data updates.
 
