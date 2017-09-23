@@ -200,17 +200,18 @@ class SourceData(db.Model):
 
 class Cache(db.Model):
     """Cache for API responses."""
+    # from sqlalchemy.dialects.postgresql import JSON
 
     __tablename__ = 'cache'
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     endpoint = db.Column(db.String, nullable=False, unique=True, index=True)
-    json_data = db.Column(db.String, nullable=False)
+    json_data = db.Column(db.JSON, nullable=False)
     md5_checksum = db.Column(db.String)
 
     def __init__(self, endpoint, json_data):
         """Metadata init."""
         self.endpoint = endpoint
-        self.json_data = json_data
+        self.json_data = json.loads(json_data)
         self.md5_checksum = md5(json_data).hexdigest()
 
     def to_json(self):
@@ -219,6 +220,7 @@ class Cache(db.Model):
         Returns:
             dict: API response ready to be JSONified.
         """
+        # return self.json_data
         return json.loads(self.json_data)
 
 
