@@ -3,10 +3,11 @@
 """Model definitions."""
 import os
 import json
+from json import JSONDecodeError
 from datetime import datetime
 from hashlib import md5
 
-from flask import url_for
+from flask import url_for, jsonify
 
 from . import db
 from .utils import next64
@@ -227,8 +228,19 @@ class Cache(db.Model):
             dict: API response ready to be JSONified.
         """
         # return self.json_data
-        return json.loads(str(self.json_data))
-
+        try:
+            response = json.loads(self.json_data)
+            return jsonify(response)
+        except TypeError:
+            try:
+                response = json.loads(str(self.json_data))
+                return jsonify(response)
+            except JSONDecodeError:
+                try:
+                    response = self.json_data
+                    return jsonify(response)
+                except:
+                    return self.json_data
 
 class Indicator(ApiModel):
     """Indicator model."""
