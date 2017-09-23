@@ -7,9 +7,8 @@ from flask_script import Manager, Shell
 import xlrd
 
 from pma_api import create_app, db
-from pma_api.models import (Characteristic, CharacteristicGroup, Country,
-        Data, EnglishString, Geography, Indicator, SourceData, Survey,
-        Translation)
+from pma_api.models import Characteristic, CharacteristicGroup, Country, Data,\
+    EnglishString, Geography, Indicator, SourceData, Survey, Translation
 
 
 app = create_app(os.getenv('FLASK_CONFIG', 'default'))
@@ -31,8 +30,6 @@ def get_file_by_glob(pattern):
 
 SRC_DATA = get_file_by_glob('./data/api_data*.xlsx')
 UI_DATA = get_file_by_glob('./data/ui_data*.xlsx')
-
-
 ORDERED_MODEL_MAP = (
     ('geography', Geography),
     ('country', Country),
@@ -44,10 +41,12 @@ ORDERED_MODEL_MAP = (
     # TODO: Add in translations to the excel file
     # ('translation', Translation)
 )
-
-
 UI_ORDERED_MODEL_MAP = (
     ('translation', Translation),
+)
+CACHE_DEFAULT_API_VERSIONS = ('1', )
+CACHE_DEFAULT_ENDPOINTS = (
+    'datalab/init'
 )
 
 
@@ -112,7 +111,7 @@ def init_from_workbook(wb, queue):
     """
     with xlrd.open_workbook(wb) as book:
         for sheetname, model in queue:
-            if sheetname == 'data': # actually done last
+            if sheetname == 'data':  # actually done last
                 for ws in book.sheets():
                     if ws.name.startswith('data'):
                         init_from_sheet(ws, model)
@@ -135,8 +134,9 @@ def create_wb_metadata(wb_path):
 
 
 # TODO: remove --overwrite
-@manager.option('--overwrite', help='Drop tables first?', action='store_true')
-def initdb(overwrite=False):
+@manager.option('-o', '--overwrite', dest='overwrite', action='store_true',
+                help='Drop tables first?', default=False)
+def initdb(overwrite):
     """Create the database.
 
     Args:
@@ -149,6 +149,25 @@ def initdb(overwrite=False):
         if overwrite:
             init_from_workbook(wb=SRC_DATA, queue=ORDERED_MODEL_MAP)
             init_from_workbook(wb=UI_DATA, queue=UI_ORDERED_MODEL_MAP)
+
+
+@manager.option('-e', '--endpoints', dest='endpoints',
+                help='API endpoints to cache.',
+                default=CACHE_DEFAULT_ENDPOINTS)
+@manager.option('-v', '--api_versions', dest='api_versions',
+                help='API versions to cache for endpoints.',
+                default=CACHE_DEFAULT_API_VERSIONS)
+def cache_responses(endpoints, api_versions):
+    """Cache responses as JSON strings in the 'cache' table of DB.
+
+    Args:
+        endpoints (tuple): Tuple of strings of endpoints to cache, e.g.
+            'datalab/init'.
+        api_versions (tuple): Tuple of strings of version numbers, without 'v'
+            prefix, e.g. '1', '2', etc.
+
+    """
+    print(endpoints, api_versions)
 
 
 manager.add_command('shell', Shell(make_context=make_shell_context))
