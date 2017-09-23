@@ -1,4 +1,5 @@
 """Application manager."""
+from copy import copy
 import csv
 import glob
 import os
@@ -46,7 +47,7 @@ UI_ORDERED_MODEL_MAP = (
 )
 CACHE_DEFAULT_API_VERSIONS = ('1', )
 CACHE_DEFAULT_ENDPOINTS = (
-    'datalab/init'
+    'datalab/init',
 )
 
 
@@ -151,6 +152,23 @@ def initdb(overwrite):
             init_from_workbook(wb=UI_DATA, queue=UI_ORDERED_MODEL_MAP)
 
 
+def cache_response(versionless_endpoint, api_version):
+    """Cache response.
+
+    Args:
+        versionless_endpoint (str): API endpoint to cache.
+        api_version (str): API version to use, without the 'v' prefix.
+    """
+    version = 'v' + str(api_version)
+    endpoint = version + '/' + versionless_endpoint
+    cache_response_client = copy(app)
+    cache_response_client.config['SQLALCHEMY_ECHO'] = False
+    getter = cache_response_client.test_client()
+    json_response = getter.get(endpoint).data
+    # db.session.add(record)
+    # db.session.commit()
+
+
 @manager.option('-e', '--endpoints', dest='endpoints',
                 help='API endpoints to cache.',
                 default=CACHE_DEFAULT_ENDPOINTS)
@@ -167,7 +185,9 @@ def cache_responses(endpoints, api_versions):
             prefix, e.g. '1', '2', etc.
 
     """
-    print(endpoints, api_versions)
+    for version in api_versions:
+        for endpoint in endpoints:
+            cache_response(endpoint, version)
 
 
 manager.add_command('shell', Shell(make_context=make_shell_context))
