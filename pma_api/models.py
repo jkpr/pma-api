@@ -211,7 +211,7 @@ class Cache(db.Model):
         """Metadata init."""
         self.endpoint = endpoint
         self.json_data = json_data
-        self.md5_checksum = md5(json_data)
+        self.md5_checksum = md5(json_data).hexdigest()
 
     def to_json(self):
         """Return dictionary ready to convert to JSON as response.
