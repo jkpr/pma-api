@@ -1,3 +1,29 @@
+v0.1.6d, 23 September 2017
+ * Added response caching and initialized with datalab/init.
+
+v0.1.6c, 22 September 2017
+ * Data updates.
+
+v0.1.6b, 21 September 2017
+ * Data updates.
+ * Sorting of countries alphabetically in datalab/init.
+ * Added key 'type' to 'datalab/init/indicatorCategories/<indicator>' for the
+ purpose of being able to tell datalab to allow pie graph charting when
+ indicator.type is 'distribution'.
+ * Added error handling for empty CSV.
+ * Added alphabetical sorting for geographies in datalab/init.
+
+v0.1.6a, 20 September 2017
+ * Improved test: test_json_response
+ * Several other test improvements
+ * Data update
+ * Made 'indicator' fields 'definition_id' and '<level1-3_id>' not nullable.
+ * Changed standard date format to %m-%Y.
+ * Bugfix: Datalab/data multiple values were being returned when only a single
+ one should have been for a given country/survey-round/indicator/charGrp/char
+ * Fixed sorting issues for: indicator, indicator category, characteristic,
+ characteristic category, geography (national vs not), survey round.
+
 v0.1.6, 14 September 2017
  * Send back datalab/init data for query parameters to /datalab/data
  * Update documentation with overTime and format=csv

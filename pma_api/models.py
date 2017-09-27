@@ -2,10 +2,12 @@
 # pylint: disable=too-many-lines
 """Model definitions."""
 import os
+import json
+from json import JSONDecodeError
 from datetime import datetime
 from hashlib import md5
 
-from flask import url_for
+from flask import url_for, jsonify
 
 from . import db
 from .utils import next64
@@ -45,7 +47,13 @@ class ApiModel(db.Model):
             source_key (str): The source date string.
         """
         string_date = kwargs[source_key]
-        this_date = datetime.strptime(string_date, '%Y-%m-%d')
+        get_date = lambda x: datetime.strptime(string_date, x)
+        try:
+            this_date = get_date('%m-%Y')
+        except ValueError:
+            # this_date = get_date('%Y-%m-%d')
+            raise ValueError('Error parsing date. Please use format \'%m-%Y\''
+                             ', e.g. 2017-12.')
         kwargs[source_key] = this_date
 
     @staticmethod
@@ -197,6 +205,43 @@ class SourceData(db.Model):
         return result
 
 
+class Cache(db.Model):
+    """Cache for API responses."""
+    # from sqlalchemy.dialects.postgresql import JSON
+
+    __tablename__ = 'cache'
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    endpoint = db.Column(db.String, nullable=False, unique=True, index=True)
+    json_data = db.Column(db.JSON, nullable=False)
+    md5_checksum = db.Column(db.String)
+
+    def __init__(self, endpoint, json_data):
+        """Metadata init."""
+        self.endpoint = endpoint
+        self.json_data = json.loads(json_data)
+        self.md5_checksum = md5(json_data).hexdigest()
+
+    def to_json(self):
+        """Return dictionary ready to convert to JSON as response.
+
+        Returns:
+            dict: API response ready to be JSONified.
+        """
+        # return self.json_data
+        try:
+            response = json.loads(self.json_data)
+            return jsonify(response)
+        except TypeError:
+            try:
+                response = json.loads(str(self.json_data))
+                return jsonify(response)
+            except JSONDecodeError:
+                try:
+                    response = self.json_data
+                    return jsonify(response)
+                except:
+                    return self.json_data
+
 class Indicator(ApiModel):
     """Indicator model."""
 
@@ -207,12 +252,16 @@ class Indicator(ApiModel):
                          nullable=False)
     order = db.Column(db.Integer, unique=True)
     type = db.Column(db.String)
-    definition_id = db.Column(db.Integer, db.ForeignKey('english_string.id'))
-    level1_id = db.Column(db.Integer, db.ForeignKey('english_string.id'))
+    definition_id = db.Column(db.Integer, db.ForeignKey('english_string.id'),
+                              nullable=False)
+    level1_id = db.Column(db.Integer, db.ForeignKey('english_string.id'),
+                          nullable=False)
     # Level 2 = Category
-    level2_id = db.Column(db.Integer, db.ForeignKey('english_string.id'))
+    level2_id = db.Column(db.Integer, db.ForeignKey('english_string.id'),
+                          nullable=False)
     # Level 3 = Domain
-    level3_id = db.Column(db.Integer, db.ForeignKey('english_string.id'))
+    level3_id = db.Column(db.Integer, db.ForeignKey('english_string.id'),
+                          nullable=False)
     # TODO: (jkp 2017-08-29) Should this be a translated string?
     # Needs: Nothing?
     denominator = db.Column(db.String)
@@ -298,6 +347,7 @@ class Indicator(ApiModel):
             'id': self.code,
             'label.id': self.label.code,
             'definition.id': self.definition.code,
+            'order': self.order,
             'type': self.type
         }
         return to_return
@@ -388,6 +438,7 @@ class CharacteristicGroup(ApiModel):
             'id': self.code,
             'label.id': self.label.code,
             'definition.id': self.definition.code,
+            'order': self.order
         }
         return to_return
 
