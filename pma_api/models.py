@@ -2,10 +2,12 @@
 # pylint: disable=too-many-lines
 """Model definitions."""
 import os
+import json
+from json import JSONDecodeError
 from datetime import datetime
 from hashlib import md5
 
-from flask import url_for
+from flask import url_for, jsonify
 
 from . import db
 from .utils import next64
@@ -195,6 +197,44 @@ class SourceData(db.Model):
             'createdOn': self.created_on
         }
         return result
+
+
+class Cache(db.Model):
+    """Cache for API responses."""
+    # from sqlalchemy.dialects.postgresql import JSON
+
+    __tablename__ = 'cache'
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    endpoint = db.Column(db.String, nullable=False, unique=True, index=True)
+    json_data = db.Column(db.JSON, nullable=False)
+    md5_checksum = db.Column(db.String)
+
+    def __init__(self, endpoint, json_data):
+        """Metadata init."""
+        self.endpoint = endpoint
+        self.json_data = json.loads(json_data)
+        self.md5_checksum = md5(json_data).hexdigest()
+
+    def to_json(self):
+        """Return dictionary ready to convert to JSON as response.
+
+        Returns:
+            dict: API response ready to be JSONified.
+        """
+        # return self.json_data
+        try:
+            response = json.loads(self.json_data)
+            return jsonify(response)
+        except TypeError:
+            try:
+                response = json.loads(str(self.json_data))
+                return jsonify(response)
+            except JSONDecodeError:
+                try:
+                    response = self.json_data
+                    return jsonify(response)
+                except:
+                    return self.json_data
 
 
 class Indicator(ApiModel):
