@@ -1,5 +1,6 @@
 """Queries."""
 from collections import ChainMap
+from operator import itemgetter
 
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -180,7 +181,8 @@ class DatalabData:
                 'value': item[0].value,
                 'precision': item[0].precision,
                 'survey.id': item[1].code,
-                'survey.date': item[1].start_date.strftime('%Y-%m-%d'),
+                # 'survey.date': item[1].start_date.strftime('%Y-%m-%d'),
+                'survey.date': item[1].start_date.strftime('%m-%Y'),
                 'survey.label.id': item[1].label.code,
                 'indicator.id': item[2],
                 'characteristicGroup.id': item[3],
@@ -487,14 +489,29 @@ class DatalabData:
         for char_grp in results:
             for cat in chargrp_categories:
                 if char_grp.category.code == cat['label.id']:
-                    cat['characteristicGroups'].append(char_grp.
-                                                       datalab_init_json())
+                    cat['characteristicGroups']\
+                        .append(char_grp.datalab_init_json())
                     break
             else:
                 chargrp_categories.append({
                     'label.id': char_grp.category.code,
+                    'label': char_grp.category.english,
                     'characteristicGroups': [char_grp.datalab_init_json()]
                 })
+
+        # - Sort characteristics within characteristic groups.
+        for category in chargrp_categories:
+            category['characteristicGroups'] = \
+                sorted(category['characteristicGroups'],
+                       key=itemgetter('order'))
+            # - Assign an implicit 'order' to each char characteristic group,
+            # inferred relatively by the order of the first characterstic,
+            # which is actually an absolute order with respect to all
+            # characteristics in all characteristic groups.
+            category['order'] = category['characteristicGroups'][0]['order']
+
+        # - Sort characteristic groups.
+        chargrp_categories = sorted(chargrp_categories, key=itemgetter('order'))
 
         return chargrp_categories
 
@@ -506,6 +523,7 @@ class DatalabData:
         results = joined.distinct().all()
         results = [record.datalab_init_json() if record is not None else "none"
                    for record in results]
+        results = sorted(results, key=itemgetter('order'))
         return results
 
     @staticmethod
