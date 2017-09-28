@@ -1,5 +1,7 @@
 """Queries."""
+import re
 from collections import ChainMap
+from operator import itemgetter
 
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -180,7 +182,8 @@ class DatalabData:
                 'value': item[0].value,
                 'precision': item[0].precision,
                 'survey.id': item[1].code,
-                'survey.date': item[1].start_date.strftime('%Y-%m-%d'),
+                # 'survey.date': item[1].start_date.strftime('%Y-%m-%d'),
+                'survey.date': item[1].start_date.strftime('%m-%Y'),
                 'survey.label.id': item[1].label.code,
                 'indicator.id': item[2],
                 'characteristicGroup.id': item[3],
@@ -548,16 +551,50 @@ class DatalabData:
                 country_geo_key = '|'.join((country.code, geo.code))
                 surveys = country_geo_map[country_geo_key]
                 survey_list = [s.datalab_init_json() for s in surveys]
+
                 this_geo_obj = {
+                    'label': geo.subheading.english,
                     'label.id': geo.subheading.code,
+                    'country.code': geo.code[:2].upper(),
                     'surveys': survey_list
                 }
                 geography_list.append(this_geo_obj)
+
+                for the_geo in geography_list:
+                    # - Extrapolate round numbers based on country-round code
+                    # substring of survey id.
+                    for the_survey in the_geo['surveys']:
+                        text = the_survey['id']
+                        round_code = re.search('(_[a-zA-Z]{2}R[0-9])', text)\
+                            .group(1)
+                        round_num = round_code[-1]
+                        the_survey['round'] = round_num
+
+                    # - Sort by list of surveys in geography by round.
+                    the_geo['surveys'] = \
+                        sorted(the_geo['surveys'], key=itemgetter('round'))
+
+                # - Sort list of geographies alphabetically.
+                geography_list = sorted(geography_list,
+                                        key=itemgetter('label'))
+
+                # - If 'National' is a listed geography, put it at the start of
+                # the list.
+                for i in range(len(geography_list)):
+                    if geography_list[i]['label'] == 'National':
+                        geography_list.insert(0, geography_list.pop(i))
+                        break
+
             this_country_obj = {
                 'label.id': country.label.code,
+                'label': country.label.english,
                 'geographies': geography_list
             }
             survey_country_list.append(this_country_obj)
+
+        # - Sort countries alphabetically.
+        survey_country_list = sorted(survey_country_list,
+                                     key=itemgetter('label'))
 
         return survey_country_list
 
