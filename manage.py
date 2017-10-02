@@ -140,21 +140,29 @@ def create_wb_metadata(wb_path):
     db.session.commit()
 
 
-@manager.option('--overwrite', help='Drop tables first?', action='store_true')
-def initdb(overwrite=False):
+@manager.option('-o', '--overwrite', dest='overwrite', action='store_true',
+                help='Drop tables first?', default=False)
+@manager.option('-d', '--init_data', dest='init_data', action='store_true',
+                help='Initialize with data?', default=False)
+@manager.option('-n', '--no_cache', dest='no_cache', action='store_true',
+                help='Do not cache responses?', default=False)
+def initdb(overwrite=False, init_data=False, no_cache=False):
     """Create the database.
 
     Args:
         overwrite (bool): Overwrite database if True, else update.
+        init_data (bool): Initialize database with data if True, else just
+            create the model.
     """
     with app.app_context():
         if overwrite:
             db.drop_all()
         db.create_all()
-        if overwrite:
+        if overwrite or init_data:
             init_from_workbook(wb=SRC_DATA, queue=ORDERED_MODEL_MAP)
             init_from_workbook(wb=UI_DATA, queue=TRANSLATION_MODEL_MAP)
-            caching.cache_datalab_init(app)
+            if not no_cache:
+                caching.cache_datalab_init(app)
 
 
 @manager.command
