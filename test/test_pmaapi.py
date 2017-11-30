@@ -5,6 +5,7 @@ import os
 import unittest
 
 from manage import app
+from config import Config
 
 
 class TestRoutes(unittest.TestCase):
@@ -41,31 +42,46 @@ class TestRoutes(unittest.TestCase):
             self.app.get(route)
 
 
-# class TestDB(unittest.TestCase):  # TODO: Adapt from tutorial.
-#     """Test database functionality.
-#
-#     Tutorial: http://flask.pocoo.org/docs/0.12/testing/
-#     """
-#
-#     def setUp(self):
-#         """Set up: (1) Put Flask app in test mode, (2) Create temp DB."""
-#         import tempfile
-#         from manage import initdb
-#         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
-#         app.testing = True
-#         self.app = app.test_client()
-#         with app.app_context():
-#             initdb()
-#
-#     def tearDown(self):
-#         """Tear down: (1) Close temp DB."""
-#         os.close(self.db_fd)
-#         os.unlink(app.config['DATABASE'])
-#
-#     def test_empty_db(self):
-#         """Test empty database."""
-#         resp = self.app.get('/')
-#         assert b'No entries here so far' in resp.data
+class TestPerformance(unittest.TestCase):
+    """Test performance."""
+
+    # TODO: Make this database.
+    config = Config().SQLALCHEMY_DATABASE_URI =\
+        'postgresql+psycopg2://pmaapi:pmaapi@localhost/pmaapi-test'
+
+    def test_create_db(self):
+        """Test performance on db creation."""
+        # change these values to something reasonable
+        expected = expected_seconds_elapsed_by_n_rows = {
+            50: 7200,
+            100: 7200,
+            200: 7200,
+            400: 7200,
+        }
+        actual = {
+            50: None,
+            100: None,
+            200: None,
+            400: None
+        }
+
+        # from datetime import timedelta
+        from datetime import datetime
+
+        for i in expected_seconds_elapsed_by_n_rows:
+            # use logger?
+            t0 = datetime.now().time()
+            ta = datetime.now()
+            # Run process on manage.py
+            t1 = datetime.now().time()
+            tb = datetime.now()
+            actual[i] = tb - ta
+            print (t1, tb, actual[i])
+            # print(actual[i])
+            self.assertLess(actual[i], expected[i])
+
+        # determine o(n) for 'actual'
+        # do an assert on that o(n)
 
 
 if __name__ == '__main__':
