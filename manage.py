@@ -31,10 +31,10 @@ def get_file_by_glob(pattern):
     return found[0]
 
 
-SRC_DATA = get_file_by_glob('./data/api_data*.xlsx')
-UI_DATA = get_file_by_glob('./data/ui_data*.xlsx')
-
-
+API_DATA = get_file_by_glob(os.path.dirname(os.path.realpath(__file__))
+                            + '/data/api_data*.xlsx')
+UI_DATA = get_file_by_glob(os.path.dirname(os.path.realpath(__file__))
+                           + '/data/ui_data*.xlsx')
 ORDERED_MODEL_MAP = (
     ('geography', Geography),
     ('country', Country),
@@ -45,8 +45,6 @@ ORDERED_MODEL_MAP = (
     ('translation', Translation),
     ('data', Data)
 )
-
-
 TRANSLATION_MODEL_MAP = (
     ('translation', Translation),
 )
@@ -141,20 +139,24 @@ def create_wb_metadata(wb_path):
 
 
 @manager.option('--overwrite', help='Drop tables first?', action='store_true')
-def initdb(overwrite=False):
+def initdb(overwrite=False, test=False):
     """Create the database.
 
     Args:
         overwrite (bool): Overwrite database if True, else update.
+        test (bool): Running a test?
     """
     with app.app_context():
         if overwrite:
             db.drop_all()
         db.create_all()
         if overwrite:
-            init_from_workbook(wb=SRC_DATA, queue=ORDERED_MODEL_MAP)
-            init_from_workbook(wb=UI_DATA, queue=TRANSLATION_MODEL_MAP)
-            caching.cache_datalab_init(app)
+            init_from_workbook(wb=API_DATA, queue=ORDERED_MODEL_MAP)
+            if not test:
+                init_from_workbook(wb=UI_DATA, queue=TRANSLATION_MODEL_MAP)
+                # TODO: 2017/11/30-jef, Fix caching error when running
+                # performance test and include in the test.
+                caching.cache_datalab_init(app)
 
 
 @manager.command
@@ -165,7 +167,7 @@ def translations():
         db.session.query(SourceData).delete()
         db.session.query(Translation).delete()
         db.session.commit()
-        init_from_workbook(wb=SRC_DATA, queue=TRANSLATION_MODEL_MAP)
+        init_from_workbook(wb=API_DATA, queue=TRANSLATION_MODEL_MAP)
         init_from_workbook(wb=UI_DATA, queue=TRANSLATION_MODEL_MAP)
 
 

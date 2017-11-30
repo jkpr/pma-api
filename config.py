@@ -11,8 +11,17 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
+class TestConfig(Config):
+    """Test configuration."""
+    db_url = 'postgresql+psycopg2://pmaapi:pmaapi@localhost/pmaapi'
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', db_url) + '-test'
+    SQLALCHEMY_ECHO = False
+    TESTING = True
+    SERVER_NAME = 'localhost:5000'
+
+
 class StagingConfig(Config):
-    """Production configuration."""
+    """Staging configuration."""
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
 
 
@@ -33,6 +42,7 @@ config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
     'staging': StagingConfig,
+    'test': TestConfig,
     # And the default is...
     'default': DevelopmentConfig
 }
